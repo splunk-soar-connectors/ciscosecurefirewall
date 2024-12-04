@@ -1,0 +1,87 @@
+{
+    "appid": "21834fdf-826d-4595-a036-d7b8841ab798",
+    "name": "Cisco Secure Firewall",
+    "description": "This app interfaces with Cisco Firepower devices to add, update and delete network objects, network object groups, access policies and access rules",
+    "publisher": "Splunk",
+    "package_name": "phantom_cisco_securefirewall",
+    "type": "firewall",
+    "license": "Copyright (c) 2024 Splunk Inc.",
+    "main_module": "ciscosecurefirewall_connector.py",
+    "app_version": "1.0.0",
+    "utctime_updated": "2024-12-04T23:13:40.000000Z",
+    "product_vendor": "Cisco Systems",
+    "product_name": "Cisco Firepower",
+    "product_version_regex": ".*",
+    "min_phantom_version": "6.2.2",
+    "python_version": "3",
+    "logo": "logo_cisco.svg",
+    "logo_dark": "logo_cisco_dark.svg",
+    "fips_compliant": true,
+    "latest_tested_versions": [
+        "Firepower Management Center 7.1.0"
+    ],
+    "configuration": {
+        "firepower_host": {
+            "description": "Device IP/Hostname",
+            "order": 0,
+            "data_type": "string",
+            "required": true
+        },
+        "verify_server_cert": {
+            "description": "Verify server certificate",
+            "data_type": "boolean",
+            "order": 1,
+            "default": false
+        },
+        "username": {
+            "description": "User with access to the Firepower node",
+            "data_type": "string",
+            "order": 2,
+            "required": true
+        },
+        "password": {
+            "description": "Password",
+            "data_type": "password",
+            "order": 3,
+            "required": true
+        },
+        "domain_name": {
+            "description": "Default firepower domain",
+            "data_type": "string",
+            "order": 4
+        },
+        "network_group_object": {
+            "description": "Default network group object",
+            "data_type": "string",
+            "order": 5
+        }
+    },
+    "actions": [
+        {
+            "action": "test connectivity",
+            "description": "Validate the asset configuration for connectivity",
+            "type": "test",
+            "identifier": "test_connectivity",
+            "read_only": true,
+            "parameters": {},
+            "output": [],
+            "versions": "EQ(*)"
+        }
+    ],
+    "pip_dependencies": {
+        "wheel": [
+            {
+                "module": "simplejson",
+                "input_file": "wheels/py36/simplejson-3.17.2-cp36-cp36m-manylinux2010_x86_64.manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+            }
+        ]
+    },
+    "pip39_dependencies": {
+        "wheel": [
+            {
+                "module": "simplejson",
+                "input_file": "wheels/py39/simplejson-3.17.2-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+            }
+        ]
+    }
+}
