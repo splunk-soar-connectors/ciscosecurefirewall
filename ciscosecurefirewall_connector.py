@@ -221,6 +221,53 @@ class FP_Connector(BaseConnector):
         self.save_progress("Connectivity test failed")
         return action_result.set_status(phantom.APP_ERROR)
 
+    def handle_get_network_groups(self, param):
+        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
+
+        # Add an action result object to self (BaseConnector) to represent the action for this param
+        action_result = self.add_action_result(ActionResult(dict(param)))
+        
+        domain_name = param["domain_name"] or "default"
+        domain_uuid = "default"
+        
+        if domain_name != "default":
+            for domain in self.domains:
+                if domain_name in domain["name"].lower():
+                    domain_uuid = domain["uuid"]
+                    break
+        
+        url = NETWORK_GROUPS_ENDPOINT.format(domain_uuid)
+
+        offset = 0
+        limit = 50
+        params = {"limit": limit}
+        while True:
+            params["offset"] = offset
+            ret_val, response = self._api_run("get", url, self, params=params)
+            if phantom.is_fail(ret_val):
+                return self.get_status()
+            self.debug_print(f"the response is {response}")
+
+            try:
+                network_group_list = response["items"]
+                for item in network_group_list:
+                    action_result.add_data({"name": item["name"], "uuid": item["id"]})
+
+            except Exception as e:
+                message = "An error occurred while processing network groups"
+                self.debug_print(f"{message}. {str(e)}")
+                return self.set_status(phantom.APP_ERROR, message)
+
+            if "paging" in response and "next" in response["paging"]:
+                offset += limit
+            else:
+                break
+        
+        summary = action_result.update_summary({'total_groups_returned': len(action_result.get_data())})
+
+        return action_result.set_status(phantom.APP_SUCCESS)
+        
+
     def handle_action(self, param):
 
         ret_val = phantom.APP_SUCCESS
@@ -232,6 +279,8 @@ class FP_Connector(BaseConnector):
 
         if action_id == "test_connectivity":
             ret_val = self._handle_test_connectivity(param)
+        elif action_id == "get_network_groups":
+            ret_val = self._handle_get_network_groups(param)
 
         return ret_val
 

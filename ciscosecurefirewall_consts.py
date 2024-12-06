@@ -19,8 +19,6 @@ STATE_FILE_CORRUPT_ERR = "Error occurred while loading the state file due to its
 DEFAULT_REQUEST_TIMEOUT = 30  # in seconds
 TOKEN_KEY = "X-auth-access-token"
 DOMAINS = "domains"
-DOMAIN_UUID_KEY = "domain_uuid"
-DOMAIN_NAME_KEY = "domain_name"
 ENCRYPTION_ERR = "Error occurred while encrypting the state file"
-LIMIT = 100
-EXPANDED = "true"
+NETWORK_GROUPS_ENDPOINT = "/api/fmc_config/v1/domain/{0}/object/networkgroups"
+

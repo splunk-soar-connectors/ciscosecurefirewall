@@ -66,6 +66,22 @@
             "parameters": {},
             "output": [],
             "versions": "EQ(*)"
+        },
+        {
+            "action": "get network group objects",
+            "description": "Gets all network group objects in fmc host",
+            "type": "investigate",
+            "identifier": "get_network_groups",
+            "read_only": true,
+            "parameters": {
+                "domain_name": {
+                    "description": "Firepower Domain. If none is specified the default domain will be queried",
+                    "data_type": "string",
+                    "order": 0
+                }
+            },
+            "output": [],
+            "versions": "EQ(*)"
         }
     ],
     "pip_dependencies": {
