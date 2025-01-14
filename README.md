@@ -10,32 +10,38 @@ Minimum Product Version: 6.2.2
 
 This app interfaces with Cisco Firepower devices to add, update and delete network objects, network object groups, access policies and access rules
 
-# Splunk> Phantom
-
-Welcome to the open-source repository for Splunk> Phantom's ciscosecurefirewall App.
-
-Please have a look at our [Contributing Guide](https://github.com/Splunk-SOAR-Apps/.github/blob/main/.github/CONTRIBUTING.md) if you are interested in contributing, raising issues, or learning more about open-source Phantom apps.
-
-## Legal and License
-
-This Phantom App is licensed under the Apache 2.0 license. Please see our [Contributing Guide](https://github.com/Splunk-SOAR-Apps/.github/blob/main/.github/CONTRIBUTING.md#legal-notice) for further details.
-
-
-### Configuration Variables
+### Configuration variables
 This table lists the configuration variables required to operate Cisco Secure Firewall. These variables are specified when configuring a Cisco Firepower asset in Splunk SOAR.
 
 VARIABLE | REQUIRED | TYPE | DESCRIPTION
 -------- | -------- | ---- | -----------
-**firepower_host** |  required  | string | Device IP/Hostname
+**fmc_type** |  required  | string | Would you like to connect to an on-prem or cloud delivered FMC
+**firepower_host** |  optional  | string | Device IP/Hostname of your on-prem FMC
 **verify_server_cert** |  optional  | boolean | Verify server certificate
-**username** |  required  | string | User with access to the Firepower node
-**password** |  required  | password | Password
+**username** |  optional  | string | User with access to the on-prem FMC node
+**password** |  optional  | password | Password for the on-prem FMC node
 **domain_name** |  optional  | string | Default firepower domain
-**network_group_object** |  optional  | string | Default network group object
+**cloud_api_key** |  optional  | string | Api key for cloud delivered FMC
+**region** |  optional  | string | Region your Cisco Security Cloud Control is deployed in
 
 ### Supported Actions  
 [test connectivity](#action-test-connectivity) - Validate the asset configuration for connectivity  
-[get network group objects](#action-get-network-group-objects) - Gets all network group objects in fmc host  
+[list network objects](#action-list-network-objects) - List network object in FMC  
+[create network object](#action-create-network-object) - Creates a network object in FMC  
+[update network object](#action-update-network-object) - Updates a network object in FMC  
+[delete network object](#action-delete-network-object) - Deletes a network object in FMC  
+[get network group objects](#action-get-network-group-objects) - Gets all network group objects in FMC host or a specfic network group  
+[create network group object](#action-create-network-group-object) - Create a network group object  
+[update network group object](#action-update-network-group-object) - Update a network group object  
+[delete network group object](#action-delete-network-group-object) - Delete a network group object  
+[get access control policies](#action-get-access-control-policies) - Gets all access control polcies in the FMC host for a particular domain  
+[create access control policy](#action-create-access-control-policy) - Create an access control policy  
+[update access control policy](#action-update-access-control-policy) - Update an access control policy  
+[delete access control policies](#action-delete-access-control-policies) - Deleted the specified access control policy  
+[get access control rules](#action-get-access-control-rules) - Gets all access control rules associated with a particular access control policy  
+[create access control rule](#action-create-access-control-rule) - Creates an access control rule associated with a particular access control policy  
+[update access control rule](#action-update-access-control-rule) - Updates an access control rule associated with a particular access control policy  
+[delete access control rules](#action-delete-access-control-rules) - Deletes access control rule associated with a particular access control policy  
 
 ## action: 'test connectivity'
 Validate the asset configuration for connectivity
@@ -49,8 +55,233 @@ No parameters are required for this action
 #### Action Output
 No Output  
 
+## action: 'list network objects'
+List network object in FMC
+
+Type: **investigate**  
+Read only: **True**
+
+#### Action Parameters
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**name** |  optional  | Network object name to filter results by | string | 
+**type** |  optional  | Network object type to filter results by | string | 
+**domain_name** |  optional  | Firepower Domain. If none is specified the default domain will be queried | string | 
+
+#### Action Output
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string |  |   success  failed 
+action_result.parameter.name | string |  |  
+action_result.parameter.type | string |  |   Network 
+action_result.parameter.domain_name | string |  |  
+action_result.data.\*.id | string |  |  
+action_result.data.\*.name | string |  |  
+action_result.data.\*.type | string |  |   Network 
+action_result.data.\*.links.self | string |  |  
+action_result.data.\*.links.parent | string |  |    
+
+## action: 'create network object'
+Creates a network object in FMC
+
+Type: **generic**  
+Read only: **False**
+
+#### Action Parameters
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**name** |  required  | Network object name | string | 
+**type** |  required  | Network object type | string | 
+**value** |  required  | Value of the network object. If type if Range specify value in the following format: ip1-ip2 | string | 
+**domain_name** |  optional  | Firepower Domain. If none is specified the default domain will be queried | string | 
+
+#### Action Output
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string |  |   success  failed 
+action_result.parameter.name | string |  |  
+action_result.parameter.type | string |  |   Network 
+action_result.parameter.value | string |  |  
+action_result.parameter.domain_name | string |  |  
+action_result.data.\*.id | string |  |  
+action_result.data.\*.name | string |  |  
+action_result.data.\*.type | string |  |   Network 
+action_result.data.\*.links.self | string |  |  
+action_result.data.\*.links.parent | string |  |  
+action_result.data.\*.value | string |  |  
+action_result.data.\*.metadata.domain.id | string |  |  
+action_result.data.\*.metadata.domain.name | string |  |  
+action_result.data.\*.metadata.domain.type | string |  |  
+action_result.data.\*.metadata.ipType | string |  |  
+action_result.data.\*.metadata.domain.lastUser.name | string |  |  
+action_result.data.\*.metadata.domain.timestamp | numeric |  |  
+action_result.data.\*.metadata.domain.parentType | string |  |  
+action_result.data.\*.metadata.overridable | boolean |  |    
+
+## action: 'update network object'
+Updates a network object in FMC
+
+Type: **generic**  
+Read only: **False**
+
+#### Action Parameters
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**object_id** |  required  | Network object id | string | 
+**name** |  required  | Network object name | string | 
+**type** |  required  | Network object type. Note this cannot change and is only used to identify the network object value you'd liek to update. | string | 
+**value** |  required  | Value of the network object. If type is Range specify value in the following format: ip1-ip2 | string | 
+**domain_name** |  optional  | Firepower Domain. If none is specified the default domain will be queried | string | 
+
+#### Action Output
+No Output  
+
+## action: 'delete network object'
+Deletes a network object in FMC
+
+Type: **generic**  
+Read only: **False**
+
+#### Action Parameters
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**object_id** |  required  | Network object id | string | 
+**type** |  required  | Network object type | string | 
+**domain_name** |  optional  | Firepower Domain. If none is specified the default domain will be queried | string | 
+
+#### Action Output
+No Output  
+
 ## action: 'get network group objects'
-Gets all network group objects in fmc host
+Gets all network group objects in FMC host or a specfic network group
+
+Type: **investigate**  
+Read only: **True**
+
+#### Action Parameters
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**group_name** |  optional  | Group name to retrieve from FMC | string | 
+**domain_name** |  optional  | Firepower Domain. If none is specified the default domain will be queried | string | 
+
+#### Action Output
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string |  |   success  failed 
+action_result.parameter.group_name | string |  |  
+action_result.parameter.domain_name | string |  |  
+action_result.data.\*.uuid | string |  |  
+action_result.data.\*.name | string |  |    
+
+## action: 'create network group object'
+Create a network group object
+
+Type: **generic**  
+Read only: **False**
+
+#### Action Parameters
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**name** |  required  | Name of the network group | string | 
+**network_object_ids** |  required  | Network objects attached to the group. Note these ids must already exist in FMC | string | 
+**domain_name** |  optional  | Firepower Domain. If none is specified the default domain will be queried | string | 
+
+#### Action Output
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string |  |   success  failed 
+action_result.parameter.name | string |  |  
+action_result.parameter.network_object_ids | string |  |   b2df29e8-5e6f-4c5d-9d5e-3fa9b3c9467b, a1c2f7d9-4b5e-42b1-8d9f-2f6b4a8e5e3c 
+action_result.parameter.domain_name | string |  |  
+action_result.data.\*.id | string |  |  
+action_result.data.\*.name | string |  |  
+action_result.data.\*.type | string |  |   NetworkGroup 
+action_result.data.\*.links.self | string |  |  
+action_result.data.\*.objects.id | string |  |  
+action_result.data.\*.objects.name | string |  |  
+action_result.data.\*.objects.type | string |  |   Network 
+action_result.data.\*.metadata.domain.id | string |  |  
+action_result.data.\*.metadata.domain.name | string |  |  
+action_result.data.\*.metadata.domain.type | string |  |  
+action_result.data.\*.metadata.domain.lastUser.name | string |  |  
+action_result.data.\*.metadata.domain.timestamp | numeric |  |  
+action_result.data.\*.metadata.domain.parentType | string |  |  
+action_result.data.\*.metadata.overridable | boolean |  |    
+
+## action: 'update network group object'
+Update a network group object
+
+Type: **generic**  
+Read only: **False**
+
+#### Action Parameters
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**network_group_id** |  required  | Network group to update | string | 
+**name** |  optional  | Name of the network group | string | 
+**network_object_ids_to_add** |  optional  | Network objects to add to the group. Note these ids must already exist in FMC | string | 
+**network_object_ids_to_remove** |  optional  | Network objects to remove frin the group. | string | 
+**domain_name** |  optional  | Firepower Domain. If none is specified the default domain will be queried | string | 
+
+#### Action Output
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string |  |   success  failed 
+action_result.parameter.network_group_id | string |  |  
+action_result.parameter.name | string |  |  
+action_result.parameter.network_object_ids_to_add | string |  |   b2df29e8-5e6f-4c5d-9d5e-3fa9b3c9467b, a1c2f7d9-4b5e-42b1-8d9f-2f6b4a8e5e3c 
+action_result.parameter.network_object_ids_to_remove | string |  |   b2df29e8-5e6f-4c5d-9d5e-3fa9b3c9467b, a1c2f7d9-4b5e-42b1-8d9f-2f6b4a8e5e3c 
+action_result.parameter.domain_name | string |  |  
+action_result.data.\*.id | string |  |  
+action_result.data.\*.name | string |  |  
+action_result.data.\*.type | string |  |   NetworkGroup 
+action_result.data.\*.links.self | string |  |  
+action_result.data.\*.objects.id | string |  |  
+action_result.data.\*.objects.name | string |  |  
+action_result.data.\*.objects.type | string |  |   Network 
+action_result.data.\*.metadata.domain.id | string |  |  
+action_result.data.\*.metadata.domain.name | string |  |  
+action_result.data.\*.metadata.domain.type | string |  |  
+action_result.data.\*.metadata.domain.lastUser.name | string |  |  
+action_result.data.\*.metadata.domain.timestamp | numeric |  |  
+action_result.data.\*.metadata.domain.parentType | string |  |  
+action_result.data.\*.metadata.overridable | boolean |  |    
+
+## action: 'delete network group object'
+Delete a network group object
+
+Type: **generic**  
+Read only: **False**
+
+#### Action Parameters
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**network_group_id** |  required  | Network group to update | string | 
+**domain_name** |  optional  | Firepower Domain. If none is specified the default domain will be queried | string | 
+
+#### Action Output
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string |  |   success  failed 
+action_result.parameter.network_group_id | string |  |  
+action_result.parameter.domain_name | string |  |  
+action_result.data.\*.id | string |  |  
+action_result.data.\*.name | string |  |  
+action_result.data.\*.type | string |  |   NetworkGroup 
+action_result.data.\*.links.self | string |  |  
+action_result.data.\*.objects.id | string |  |  
+action_result.data.\*.objects.name | string |  |  
+action_result.data.\*.objects.type | string |  |   Network 
+action_result.data.\*.metadata.domain.id | string |  |  
+action_result.data.\*.metadata.domain.name | string |  |  
+action_result.data.\*.metadata.domain.type | string |  |  
+action_result.data.\*.metadata.domain.lastUser.name | string |  |  
+action_result.data.\*.metadata.domain.timestamp | numeric |  |  
+action_result.data.\*.metadata.domain.parentType | string |  |  
+action_result.data.\*.metadata.overridable | boolean |  |    
+
+## action: 'get access control policies'
+Gets all access control polcies in the FMC host for a particular domain
 
 Type: **investigate**  
 Read only: **True**
@@ -61,4 +292,294 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **domain_name** |  optional  | Firepower Domain. If none is specified the default domain will be queried | string | 
 
 #### Action Output
-No Output
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string |  |   success  failed 
+action_result.parameter.domain_name | string |  |  
+action_result.data.\*.name | string |  |   new-policy 
+action_result.data.\*.policy_id | string |  |   00000000-0000-0ed3-0000-012884902138   
+
+## action: 'create access control policy'
+Create an access control policy
+
+Type: **generic**  
+Read only: **False**
+
+#### Action Parameters
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**name** |  required  | Name of the network group | string | 
+**description** |  optional  | Description of the policy | string | 
+**action** |  required  | Type of action to take on matching traffic | string | 
+**domain_name** |  optional  | Firepower Domain. If none is specified the default domain will be queried | string | 
+
+#### Action Output
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string |  |   success  failed 
+action_result.parameter.name | string |  |  
+action_result.parameter.description | string |  |  
+action_result.parameter.action | string |  |  
+action_result.parameter.domain_name | string |  |  
+action_result.data.\*.id | string |  |  
+action_result.data.\*.name | string |  |   new-policy 
+action_result.data.\*.type | string |  |   AccessPolicy 
+action_result.data.\*.links.self | string |  |   AccessPolicy 
+action_result.data.\*.rules.type | string |  |   AccessRule 
+action_result.data.\*.rules.links.self | string |  |  
+action_result.data.\*.description | string |  |    
+
+## action: 'update access control policy'
+Update an access control policy
+
+Type: **generic**  
+Read only: **False**
+
+#### Action Parameters
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**policy_id** |  required  | Id of the policy to update | string | 
+**name** |  optional  | Name of the network group | string | 
+**description** |  optional  | Description of the policy | string | 
+**action** |  optional  | Type of action to take on matching traffic | string | 
+**domain_name** |  optional  | Firepower Domain. If none is specified the default domain will be queried | string | 
+
+#### Action Output
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string |  |   success  failed 
+action_result.parameter.policy_id | string |  |  
+action_result.parameter.name | string |  |  
+action_result.parameter.description | string |  |  
+action_result.parameter.action | string |  |  
+action_result.parameter.domain_name | string |  |  
+action_result.data.\*.id | string |  |  
+action_result.data.\*.name | string |  |   new-policy 
+action_result.data.\*.type | string |  |   AccessPolicy 
+action_result.data.\*.links.self | string |  |   AccessPolicy 
+action_result.data.\*.rules.type | string |  |   AccessRule 
+action_result.data.\*.rules.links.self | string |  |  
+action_result.data.\*.description | string |  |  
+action_result.data.\*.defaultAction.id | string |  |  
+action_result.data.\*.defaultAction.type | string |  |   AccessPolicyDefaultAction 
+action_result.data.\*.defaultAction.action | string |  |   BLOCK   
+
+## action: 'delete access control policies'
+Deleted the specified access control policy
+
+Type: **generic**  
+Read only: **False**
+
+#### Action Parameters
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**policy_id** |  required  | Id of the policy to delete | string | 
+**domain_name** |  optional  | Firepower Domain. If none is specified the default domain will be queried | string | 
+
+#### Action Output
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string |  |   success  failed 
+action_result.parameter.policy_id | string |  |  
+action_result.parameter.name | string |  |  
+action_result.parameter.description | string |  |  
+action_result.parameter.action | string |  |  
+action_result.parameter.domain_name | string |  |  
+action_result.data.\*.id | string |  |  
+action_result.data.\*.name | string |  |   new-policy 
+action_result.data.\*.type | string |  |   AccessPolicy 
+action_result.data.\*.links.self | string |  |   AccessPolicy 
+action_result.data.\*.rules.type | string |  |   AccessRule 
+action_result.data.\*.rules.links.self | string |  |  
+action_result.data.\*.description | string |  |  
+action_result.data.\*.defaultAction.id | string |  |  
+action_result.data.\*.defaultAction.type | string |  |   AccessPolicyDefaultAction 
+action_result.data.\*.defaultAction.action | string |  |   BLOCK 
+action_result.data.\*.securityIntelligence.id | string |  |  
+action_result.data.\*.securityIntelligence.type | string |  |   SecurityIntelligencePolicy 
+action_result.data.\*.securityIntelligence.links.self | string |  |    
+
+## action: 'get access control rules'
+Gets all access control rules associated with a particular access control policy
+
+Type: **investigate**  
+Read only: **True**
+
+#### Action Parameters
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**policy_id** |  required  | Access control policy that the rule is apart of | string | 
+**rule_id** |  optional  | Id of the rules | string | 
+**domain_name** |  optional  | Firepower Domain. If none is specified the default domain will be queried | string | 
+
+#### Action Output
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string |  |   success  failed 
+action_result.parameter.policy_id | string |  |  
+action_result.parameter.domain_name | string |  |  
+action_result.data.\*.id | string |  |  
+action_result.data.\*.name | string |  |   new-policy   
+
+## action: 'create access control rule'
+Creates an access control rule associated with a particular access control policy
+
+Type: **generic**  
+Read only: **False**
+
+#### Action Parameters
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**policy_id** |  required  | Access control policy the rule will be apart of | string | 
+**name** |  required  | Name of the access control rule | string | 
+**action** |  required  | Type of action to take on matching traffic | string | 
+**enabled** |  optional  | Wether the rule is enabled | boolean | 
+**source_networks** |  optional  | Network groups or objects to determine what action to take against traffic based on where it originated from | string | 
+**destination_networks** |  optional  | Network groups or objects to determine what action to take against traffic based on its intended destination | string | 
+**domain_name** |  optional  | Firepower Domain. If none is specified the default domain will be queried | string | 
+
+#### Action Output
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string |  |   success  failed 
+action_result.parameter.policy_id | string |  |  
+action_result.parameter.name | string |  |  
+action_result.parameter.action | string |  |   BLOCK 
+action_result.parameter.enabled | boolean |  |  
+action_result.parameter.source_networks | string |  |   00000000-0000-0ed3-0000-012884902229, 00000000-0000-0ed3-0000-012884902491 
+action_result.parameter.destination_networks | string |  |   00000000-0000-0ed3-0000-012884902229, 00000000-0000-0ed3-0000-012884902491 
+action_result.parameter.domain_name | string |  |  
+action_result.data.\*.id | string |  |  
+action_result.data.\*.name | string |  |  
+action_result.data.\*.type | string |  |   AccessRule 
+action_result.data.\*.links.self | string |  |  
+action_result.data.\*.action | string |  |   BLOCK 
+action_result.data.\*.logEnd | boolean |  |  
+action_result.data.\*.enabled | boolean |  |  
+action_result.data.\*.logBegin | boolean |  |  
+action_result.data.\*.logFiles | boolean |  |  
+action_result.data.\*.metadata.accessPolicy.id | string |  |  
+action_result.data.\*.metadata.accessPolicy.name | string |  |  
+action_result.data.\*.metadata.accessPolicy.type | string |  |   AccessPolicy 
+action_result.data.\*.variableSet.id | string |  |  
+action_result.data.\*.variableSet.name | string |  |  
+action_result.data.\*.variableSet.type | string |  |   VariableSet 
+action_result.data.\*.sourceNetworks.objects.\*.id | string |  |  
+action_result.data.\*.sourceNetworks.objects.\*.name | string |  |  
+action_result.data.\*.sourceNetworks.objects.\*.type | string |  |   NetworkGroup  Network 
+action_result.data.\*.sourceNetworks.objects.\*.overridable | boolean |  |  
+action_result.data.\*.sendEventsToFMC | boolean |  |  
+action_result.data.\*.destinationNetworks.objects.\*.id | string |  |  
+action_result.data.\*.destinationNetworks.objects.\*.name | string |  |  
+action_result.data.\*.destinationNetworks.objects.\*.type | string |  |   NetworkGroup  Network 
+action_result.data.\*.destinationNetworks.objects.\*.overridable | boolean |  |    
+
+## action: 'update access control rule'
+Updates an access control rule associated with a particular access control policy
+
+Type: **generic**  
+Read only: **False**
+
+#### Action Parameters
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**rule_id** |  required  | Access control rule to update | string | 
+**policy_id** |  required  | Access control policy that the rule is apart of | string | 
+**name** |  optional  | Name of the access control rule | string | 
+**action** |  optional  | Type of action to take on matching traffic | string | 
+**enabled** |  optional  | Wether the rule is enabled | boolean | 
+**source_networks_to_add** |  optional  | Add these network groups or objects to the rules source networks | string | 
+**source_networks_to_remove** |  optional  | Remove these network groups or objects from the rules source networks | string | 
+**destination_networks_to_add** |  optional  | Add these network groups or objects to the rules destination networks | string | 
+**destination_networks_to_remove** |  optional  | Remove these network groups or objects from the rules destination networks | string | 
+**domain_name** |  optional  | Firepower Domain. If none is specified the default domain will be queried | string | 
+
+#### Action Output
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string |  |   success  failed 
+action_result.parameter.rule_id | string |  |  
+action_result.parameter.policy_id | string |  |  
+action_result.parameter.name | string |  |  
+action_result.parameter.action | string |  |   BLOCK 
+action_result.parameter.enabled | boolean |  |  
+action_result.parameter.source_networks_to_add | string |  |   00000000-0000-0ed3-0000-012884902229, 00000000-0000-0ed3-0000-012884902491 
+action_result.parameter.source_networks_to_remove | string |  |   00000000-0000-0ed3-0000-012884902229, 00000000-0000-0ed3-0000-012884902491 
+action_result.parameter.destination_networks_to_add | string |  |   00000000-0000-0ed3-0000-012884902229, 00000000-0000-0ed3-0000-012884902491 
+action_result.parameter.destination_networks_to_remove | string |  |   00000000-0000-0ed3-0000-012884902229, 00000000-0000-0ed3-0000-012884902491 
+action_result.parameter.domain_name | string |  |  
+action_result.data.\*.id | string |  |  
+action_result.data.\*.name | string |  |  
+action_result.data.\*.type | string |  |   AccessRule 
+action_result.data.\*.links.self | string |  |  
+action_result.data.\*.action | string |  |   BLOCK 
+action_result.data.\*.logEnd | boolean |  |  
+action_result.data.\*.enabled | boolean |  |  
+action_result.data.\*.logBegin | boolean |  |  
+action_result.data.\*.logFiles | boolean |  |  
+action_result.data.\*.metadata.domain.id | string |  |  
+action_result.data.\*.metadata.domain.name | string |  |   Global 
+action_result.data.\*.metadata.domain.type | string |  |   Domain 
+action_result.data.\*.metadata.accessPolicy.id | string |  |  
+action_result.data.\*.metadata.accessPolicy.name | string |  |  
+action_result.data.\*.metadata.accessPolicy.type | string |  |   AccessPolicy 
+action_result.data.\*.variableSet.id | string |  |  
+action_result.data.\*.variableSet.name | string |  |  
+action_result.data.\*.variableSet.type | string |  |   VariableSet 
+action_result.data.\*.sourceNetworks.objects.\*.id | string |  |  
+action_result.data.\*.sourceNetworks.objects.\*.name | string |  |  
+action_result.data.\*.sourceNetworks.objects.\*.type | string |  |   NetworkGroup  Network 
+action_result.data.\*.sourceNetworks.objects.\*.overridable | boolean |  |  
+action_result.data.\*.sendEventsToFMC | boolean |  |  
+action_result.data.\*.destinationNetworks.objects.\*.id | string |  |  
+action_result.data.\*.destinationNetworks.objects.\*.name | string |  |  
+action_result.data.\*.destinationNetworks.objects.\*.type | string |  |   NetworkGroup  Network 
+action_result.data.\*.destinationNetworks.objects.\*.overridable | boolean |  |    
+
+## action: 'delete access control rules'
+Deletes access control rule associated with a particular access control policy
+
+Type: **generic**  
+Read only: **False**
+
+#### Action Parameters
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**rule_id** |  required  | Access control rule to delete | string | 
+**policy_id** |  required  | Access control policy that the rule is apart of | string | 
+**domain_name** |  optional  | Firepower Domain. If none is specified the default domain will be queried | string | 
+
+#### Action Output
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string |  |   success  failed 
+action_result.parameter.rule_id | string |  |  
+action_result.parameter.policy_id | string |  |  
+action_result.parameter.domain_name | string |  |  
+action_result.data.\*.id | string |  |  
+action_result.data.\*.name | string |  |  
+action_result.data.\*.type | string |  |   AccessRule 
+action_result.data.\*.links.self | string |  |  
+action_result.data.\*.action | string |  |   BLOCK 
+action_result.data.\*.logEnd | boolean |  |  
+action_result.data.\*.enabled | boolean |  |  
+action_result.data.\*.logBegin | boolean |  |  
+action_result.data.\*.logFiles | boolean |  |  
+action_result.data.\*.metadata.domain.id | string |  |  
+action_result.data.\*.metadata.domain.name | string |  |   Global 
+action_result.data.\*.metadata.domain.type | string |  |   Domain 
+action_result.data.\*.metadata.accessPolicy.id | string |  |  
+action_result.data.\*.metadata.accessPolicy.name | string |  |  
+action_result.data.\*.metadata.accessPolicy.type | string |  |   AccessPolicy 
+action_result.data.\*.variableSet.id | string |  |  
+action_result.data.\*.variableSet.name | string |  |  
+action_result.data.\*.variableSet.type | string |  |   VariableSet 
+action_result.data.\*.sourceNetworks.objects.\*.id | string |  |  
+action_result.data.\*.sourceNetworks.objects.\*.name | string |  |  
+action_result.data.\*.sourceNetworks.objects.\*.type | string |  |   NetworkGroup  Network 
+action_result.data.\*.sourceNetworks.objects.\*.overridable | boolean |  |  
+action_result.data.\*.sendEventsToFMC | boolean |  |  
+action_result.data.\*.destinationNetworks.objects.\*.id | string |  |  
+action_result.data.\*.destinationNetworks.objects.\*.name | string |  |  
+action_result.data.\*.destinationNetworks.objects.\*.type | string |  |   NetworkGroup  Network 
+action_result.data.\*.destinationNetworks.objects.\*.overridable | boolean |  |  
