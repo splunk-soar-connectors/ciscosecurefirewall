@@ -13,14 +13,22 @@
 # either express or implied. See the License for the specific language governing permissions
 # and limitations under the License.
 
+from typing import Any, Dict, Optional, Tuple
+
 import encryption_helper
 import phantom.app as phantom
 import requests
+from bs4 import BeautifulSoup
 import simplejson as json
 from phantom.action_result import ActionResult
 from phantom.base_connector import BaseConnector
-from typing import Dict, Any, Tuple, Optional
+
 from ciscosecurefirewall_consts import *
+
+
+class RetVal(tuple):
+    def __new__(cls, val1, val2=None):
+        return tuple.__new__(RetVal, (val1, val2))
 
 
 class FP_Connector(BaseConnector):
@@ -38,7 +46,7 @@ class FP_Connector(BaseConnector):
         self.headers = HEADERS
         self.verify = False
         self.default_firepower_domain = None
-        self.generate_new_token = False
+        self.refresh_count = 0
 
     def _reset_state_file(self):
         """
@@ -72,12 +80,15 @@ class FP_Connector(BaseConnector):
         self.fmc_type = config["fmc_type"]
 
         if self.is_cloud_deployment():
-            ret_val = self.authenicate_cloud_fmc(config, action_result)
+            ret_val = self.authenicate_cloud_fmc(config)
         else:
+            self.asset_id = self.get_asset_id()
             try:
                 if TOKEN_KEY in self._state:
                     self.debug_print("Decrypting the token")
-                    self._state[TOKEN_KEY] = encryption_helper.decrypt(self._state[TOKEN_KEY], self.get_asset_id())
+                    self._state[TOKEN_KEY] = encryption_helper.decrypt(self._state[TOKEN_KEY], self.asset_id)
+                if "domains" in self._state:
+                    self.domains = self._state["domains"]
             except Exception as e:
                 self.debug_print("Error occurred while decrypting the token: {}".format(str(e)))
                 self._reset_state_file()
@@ -87,8 +98,10 @@ class FP_Connector(BaseConnector):
             self.password = config["password"]
             self.default_firepower_domain = config.get("domain_name")
             self.verify = config.get("verify_server_cert", False)
+            self.refresh_token = self._state.get(REFRESH_COUNT, 0)
 
             ret_val = self._get_token(action_result)
+            self.debug_print(f"the state file is {self._state}")
 
         if phantom.is_fail(ret_val):
             return self.get_status()
@@ -123,7 +136,10 @@ class FP_Connector(BaseConnector):
         This method updates the state with the new values.
         """
         self._state[TOKEN_KEY] = self.token
+        self._state[REFRESH_TOKEN_KEY] = self.refresh_token
+        self._state[REFRESH_COUNT] = self.refresh_count
         self._state[DOMAINS] = self.domains
+        self.save_state(self._state)
 
     def authenicate_cloud_fmc(self, config):
         """
@@ -144,18 +160,35 @@ class FP_Connector(BaseConnector):
         self.token = self._state.get(TOKEN_KEY)
 
         if self.token:
-            self.headers.update({"X-auth-access-token": self.token})
+            self.headers[TOKEN_KEY] = self.token
             return phantom.APP_SUCCESS
+
+        # Use refresh token
+        if REFRESH_TOKEN_KEY in self._state and self.refresh_count < 3:
+            self.refresh_count += 1
+            self.headers[REFRESH_TOKEN_KEY] = self._state[REFRESH_TOKEN_KEY]
+            self.headers[TOKEN_KEY] = self._state[TOKEN_KEY]
+            ret_val, headers = self._api_run("post", REFRESH_ENDPOINT, action_result, headers_only=True, first_try=False)
+            if not phantom.is_fail(ret_val):
+                self.token = headers.get(TOKEN_KEY)
+                self.headers[TOKEN_KEY] = self.token
+                self.headers.pop(REFRESH_TOKEN_KEY)
+                self._update_state()
+                return phantom.APP_SUCCESS
 
         # Generate a new token
         self.debug_print("Fetching a new token")
-        self.generate_new_token = True
-        ret_val, headers = self._api_run("post", TOKEN_ENDPOINT, action_result, headers_only=True, first_try=False)
+        self.headers.pop(REFRESH_TOKEN_KEY, None)
+        auth = requests.auth.HTTPBasicAuth(self.username, self.password)
+        ret_val, headers = self._api_run("post", TOKEN_ENDPOINT, action_result, headers_only=True, first_try=True, auth=auth)
         if phantom.is_fail(ret_val):
+            self.debug_print(f"Error {ret_val} while generating token with response {headers}")
             self._reset_state_file()
             return action_result.get_status()
 
-        self.token = headers.get("X-auth-access-token")
+        self.token = headers.get(TOKEN_KEY)
+        self.refresh_token = headers.get(REFRESH_TOKEN_KEY)
+        self.refresh_count = 0
 
         try:
             self.domains = json.loads(headers.get("DOMAINS"))
@@ -167,30 +200,103 @@ class FP_Connector(BaseConnector):
 
         return phantom.APP_SUCCESS
 
-    def _api_run(self, method, resource, action_result, json_body=None, headers_only=False, first_try=True, params=None):
+    def _process_empty_response(self, response, action_result):
+        if response.status_code == 200:
+            return RetVal(phantom.APP_SUCCESS, {})
+
+        return RetVal(
+            action_result.set_status(phantom.APP_ERROR, "Empty response and no information in the header"),
+            None,
+        )
+
+    def _process_html_response(self, response, action_result):
+        # An html response, treat it like an error
+        status_code = response.status_code
+
+        try:
+            soup = BeautifulSoup(response.text, "html.parser")
+            error_text = soup.text
+            split_lines = error_text.split("\n")
+            split_lines = [x.strip() for x in split_lines if x.strip()]
+            error_text = "\n".join(split_lines)
+        except:
+            error_text = "Cannot parse error details"
+
+        message = "Status Code: {0}. Data from server:\n{1}\n".format(status_code, error_text)
+
+        message = message.replace("{", "{{").replace("}", "}}")
+        return RetVal(action_result.set_status(phantom.APP_ERROR, message), None)
+
+    def _process_json_response(self, r, action_result):
+        # Try a json parse
+        try:
+            resp_json = r.json()
+        except Exception as e:
+            return RetVal(
+                action_result.set_status(
+                    phantom.APP_ERROR,
+                    "Unable to parse JSON response. Error: {0}".format(str(e)),
+                ),
+                None,
+            )
+
+        # Please specify the status codes here
+        if 200 <= r.status_code < 399:
+            return RetVal(phantom.APP_SUCCESS, resp_json)
+
+        # You should process the error returned in the json
+        message = "Error from server. Status Code: {0} Data from server: {1}".format(r.status_code, r.text.replace("{", "{{").replace("}", "}}"))
+
+        return RetVal(action_result.set_status(phantom.APP_ERROR, message), None)
+
+    def _process_response(self, r, action_result):
+
+        # store the r_text in debug data, it will get dumped in the logs if the action fails
+        if hasattr(action_result, "add_debug_data"):
+            action_result.add_debug_data({"r_status_code": r.status_code})
+            action_result.add_debug_data({"r_text": r.text})
+            action_result.add_debug_data({"r_headers": r.headers})
+
+        # Process each 'Content-Type' of response separately
+
+        # Process a json response
+        if "json" in r.headers.get("Content-Type", ""):
+            return self._process_json_response(r, action_result)
+
+        # Process an HTML response, Do this no matter what the api talks.
+        # There is a high chance of a PROXY in between phantom and the rest of
+        # world, in case of errors, PROXY's return HTML, this function parses
+        # the error and adds it to the action_result.
+        if "html" in r.headers.get("Content-Type", ""):
+            return self._process_html_response(r, action_result)
+
+        # it's not content-type that is to be parsed, handle an empty response
+        if not r.text:
+            return self._process_empty_response(r, action_result)
+
+        # everything else is actually an error at this point
+        msg = "Can't process response from server. Status Code: {0} Data from server: {1}".format(
+            r.status_code, r.text.replace("{", "{{").replace("}", "}}")
+        )
+
+        return RetVal(action_result.set_status(phantom.APP_ERROR, msg), None)
+
+    def _api_run(self, method, resource, action_result, json_body=None, headers_only=False, first_try=True, params=None, auth=None):
         """
         This method makes a REST call to the API
         """
         request_method = getattr(requests, method)
-        self.debug_print(f"host is {self.firepower_host} and resource is {resource}")
         url = "https://{0}{1}".format(self.firepower_host, resource)
         if json_body:
             self.headers.update({"Content-type": "application/json"})
-
-        auth = None
-        if self.generate_new_token:
-            auth = requests.auth.HTTPBasicAuth(self.username, self.password)
-            self.generate_new_token = False
 
         try:
             result = request_method(
                 url, auth=auth, headers=self.headers, json=json_body, verify=self.verify, params=params, timeout=DEFAULT_REQUEST_TIMEOUT
             )
         except Exception as e:
-            self.debug_print(f"problem here {e}")
             return action_result.set_status(phantom.APP_ERROR, "Error connecting to server. {}".format(str(e))), None
 
-        self.debug_print(f"status code is {result.status_code}")
         if not (200 <= result.status_code < 399):
             if result.status_code == 401 and first_try:
                 self._reset_state_file()
@@ -199,30 +305,18 @@ class FP_Connector(BaseConnector):
                     if phantom.is_fail(ret_val):
                         return action_result.get_status(), None
 
+                self.debug_print(f"Running url that failed because of token error {resource}")
                 return self._api_run(method, resource, action_result, json_body, headers_only, first_try=False)
 
             message = "Error from server. Status Code: {0} Data from server: {1}".format(
                 result.status_code, result.text.replace("{", "{{").replace("}", "}}")
             )
-
             return action_result.set_status(phantom.APP_ERROR, message), None
 
         if headers_only:
             return phantom.APP_SUCCESS, result.headers
 
-        resp_json = None
-        try:
-            resp_json = result.json()
-        except Exception as e:
-            return action_result.set_status(phantom.APP_ERROR, "Unable to parse JSON response. {0}".format(str(e))), None
-
-        if not resp_json:
-            return (
-                action_result.set_status(phantom.APP_ERROR, f"Status code: {result.status_code}. Received empty response from the server"),
-                None,
-            )
-
-        return phantom.APP_SUCCESS, resp_json
+        return self._process_response(result, action_result)
 
     def is_cloud_deployment(self):
         return self.fmc_type == "Cloud"
@@ -299,7 +393,7 @@ class FP_Connector(BaseConnector):
                 if phantom.is_fail(ret_val):
                     return action_result.get_status()
 
-        action_result.update_summary({'total_objects_returned': len(action_result.get_data())})
+        action_result.update_summary({"total_objects_returned": len(action_result.get_data())})
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
@@ -323,7 +417,6 @@ class FP_Connector(BaseConnector):
         if phantom.is_fail(ret_val):
             return action_result.get_status()
 
-        self.debug_print(f"the response type is {type(response)}")
         action_result.add_data(response)
         summary = action_result.update_summary({})
         summary["Message"] = f"Successfully created network object with name {name}"
@@ -334,11 +427,16 @@ class FP_Connector(BaseConnector):
 
         action_result = self.add_action_result(ActionResult(dict(param)))
         object_id = param["object_id"]
-        name = param["name"]
-        object_type = param["type"]
-        payload = {"id": object_id, "name": name, "type": object_type, "value": param["value"]}
-
         domain_uuid = self.get_domain_id(param.get("domain_name"))
+        ret_val, curent_object = self.get_network_object(domain_uuid, object_id)
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
+
+        name = param.get("name") or curent_object["name"]
+        object_type = param.get("type") or curent_object["type"]
+        value = param.get("value") or curent_object["value"]
+        payload = {"id": object_id, "name": name, "type": object_type, "value": value}
+
         url = NETWORK_OBJECT_ID_ENDPOINT.format(domain_id=domain_uuid, type=object_type.lower() + "s", object_id=object_id)
 
         ret_val, response = self._api_run("put", url, action_result, json_body=payload)
@@ -360,7 +458,6 @@ class FP_Connector(BaseConnector):
 
         url = NETWORK_OBJECT_ID_ENDPOINT.format(domain_id=domain_uuid, type=object_type.lower() + "s", object_id=object_id)
         ret_val, response = self._api_run("delete", url, action_result)
-        self.debug_print("response is", response)
         if phantom.is_fail(ret_val):
             return action_result.get_status()
 
@@ -376,7 +473,8 @@ class FP_Connector(BaseConnector):
             return "default"
 
         for domain in self.domains:
-            if domain_name.lower() == domain["name"].lower():
+            leaf_domain = domain["name"].lower().split('/')[-1]
+            if domain_name.lower() == leaf_domain:
                 return domain["uuid"]
 
     def _handle_get_network_groups(self, param: Dict[str, Any]) -> bool:
@@ -392,13 +490,12 @@ class FP_Connector(BaseConnector):
 
         offset = 0
         limit = 50
-        params = {"limit": limit}
+        params = {"limit": limit, "expanded": True}
         while True:
             params["offset"] = offset
             ret_val, response = self._api_run("get", url, action_result, params=params)
             if phantom.is_fail(ret_val):
                 return action_result.get_status()
-            self.debug_print(f"the response is {response}")
 
             try:
                 network_group_list = response.get("items", [])
@@ -416,7 +513,7 @@ class FP_Connector(BaseConnector):
             else:
                 break
 
-        action_result.update_summary({'total_groups_returned': len(action_result.get_data())})
+        action_result.update_summary({"total_groups_returned": len(action_result.get_data())})
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
@@ -427,7 +524,7 @@ class FP_Connector(BaseConnector):
 
         group_name = param["name"]
         object_ids = param["network_object_ids"]
-        objects = [{"id": item.strip()} for item in object_ids.split(',') if item.strip()]
+        objects = [{"id": item.strip()} for item in object_ids.split(",") if item.strip()]
         payload = {"name": group_name, "type": "NetworkGroup", "objects": objects}
         domain_uuid = self.get_domain_id(param.get("domain_name"))
 
@@ -464,10 +561,10 @@ class FP_Connector(BaseConnector):
         current_network_objects = {obj["id"] for obj in resp.get("objects", [])}
 
         network_objects_to_add = param.get("network_object_ids_to_add", "")
-        current_network_objects.update({item.strip() for item in network_objects_to_add.split(',') if item.strip()})
+        current_network_objects.update({item.strip() for item in network_objects_to_add.split(",") if item.strip()})
 
         network_objects_to_remove = param.get("network_object_ids_to_remove", "")
-        current_network_objects.difference_update({item.strip() for item in network_objects_to_remove.split(',') if item.strip()})
+        current_network_objects.difference_update({item.strip() for item in network_objects_to_remove.split(",") if item.strip()})
 
         objects = [{"id": object_id} for object_id in current_network_objects]
         resp["objects"] = objects
@@ -515,7 +612,6 @@ class FP_Connector(BaseConnector):
             ret_val, response = self._api_run("get", url, action_result, params=params)
             if phantom.is_fail(ret_val):
                 return action_result.get_status()
-            self.debug_print(f"the response is {response}")
 
             try:
                 policies = response.get("items", [])
@@ -532,7 +628,7 @@ class FP_Connector(BaseConnector):
             else:
                 break
 
-        action_result.update_summary({'total_policies_returned': len(action_result.get_data())})
+        action_result.update_summary({"total_policies_returned": len(action_result.get_data())})
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
@@ -575,7 +671,11 @@ class FP_Connector(BaseConnector):
 
         cur_action = policy_data["defaultAction"]
         payload = {
-            "id": policy_data["id"], "name": policy_data["name"], "type": "AccessPolicy", "defaultAction": cur_action, "description": policy_data.get("description", "")
+            "id": policy_data["id"],
+            "name": policy_data["name"],
+            "type": "AccessPolicy",
+            "defaultAction": cur_action,
+            "description": policy_data.get("description", ""),
         }
 
         if param.get("name"):
@@ -644,7 +744,6 @@ class FP_Connector(BaseConnector):
             ret_val, response = self._api_run("get", url, action_result, params=params)
             if phantom.is_fail(ret_val):
                 return action_result.get_status()
-            self.debug_print(f"the response is {response}")
 
             try:
                 rules = response.get("items", [])
@@ -661,7 +760,7 @@ class FP_Connector(BaseConnector):
             else:
                 break
 
-        action_result.update_summary({'total_rules_returned': len(action_result.get_data())})
+        action_result.update_summary({"total_rules_returned": len(action_result.get_data())})
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
@@ -689,10 +788,16 @@ class FP_Connector(BaseConnector):
         policy_id = param["policy_id"]
         name = param["name"]
 
-        rule_payload = {"name": name, "action": param["action"], "enabled": param["enabled"], "sourceNetworks": {"objects": []}, "destinationNetworks": {"objects": []}}
+        rule_payload = {
+            "name": name,
+            "action": param["action"],
+            "enabled": param.get("enabled", False),
+            "sourceNetworks": {"objects": []},
+            "destinationNetworks": {"objects": []},
+        }
 
         source_networks = param.get("source_networks", "")
-        source_networks = [network.strip() for network in source_networks.split(',') if network.strip()]
+        source_networks = [network.strip() for network in source_networks.split(",") if network.strip()]
 
         ret_val, source_networks_objects = self.build_network_objects_list(source_networks, domain_uuid)
         if phantom.is_fail(ret_val):
@@ -700,7 +805,7 @@ class FP_Connector(BaseConnector):
         rule_payload["sourceNetworks"]["objects"] = source_networks_objects
 
         destination_networks = param.get("destination_networks", "")
-        destination_networks = [network.strip() for network in destination_networks.split(',') if network.strip()]
+        destination_networks = [network.strip() for network in destination_networks.split(",") if network.strip()]
         ret_val, destination_networks_objects = self.build_network_objects_list(destination_networks, domain_uuid)
         if phantom.is_fail(ret_val):
             return ret_val
@@ -730,11 +835,16 @@ class FP_Connector(BaseConnector):
         policy_id = param["policy_id"]
 
         ret_val, rule_data = self.get_access_control_rule(domain_uuid, policy_id, rule_id)
-        self.debug_print(f"rule response is {rule_data}")
         if phantom.is_fail(ret_val):
             return self.get_status()
 
-        rule_payload = {"id": rule_data["id"], "name": rule_data["name"], "action": rule_data["action"], "type": rule_data["type"], "enabled": rule_data["enabled"]}
+        rule_payload = {
+            "id": rule_data["id"],
+            "name": rule_data["name"],
+            "action": rule_data["action"],
+            "type": rule_data["type"],
+            "enabled": rule_data["enabled"],
+        }
 
         if param.get("name"):
             rule_payload["name"] = param["name"]
@@ -747,30 +857,32 @@ class FP_Connector(BaseConnector):
 
         current_source_networks = rule_data.get("destinationNetworks", {}).get("objects", [])
         source_networks = param.get("source_networks_to_add", "")
-        source_networks = [network.strip() for network in source_networks.split(',') if network.strip()]
+        source_networks = [network.strip() for network in source_networks.split(",") if network.strip()]
         ret_val, source_networks_objects = self.build_network_objects_list(source_networks, domain_uuid)
         if phantom.is_fail(ret_val):
             return ret_val
         current_source_networks.extend(source_networks_objects)
         current_source_networks_dic = {network["id"]: network for network in current_source_networks}
         source_networks_to_remove = param.get("source_networks_to_remove", "")
-        source_networks_to_remove = [network.strip() for network in source_networks_to_remove.split(',') if network.strip()]
+        source_networks_to_remove = [network.strip() for network in source_networks_to_remove.split(",") if network.strip()]
 
         filtered_source_networks = [value for key, value in current_source_networks_dic.items() if key not in source_networks_to_remove]
         rule_payload["sourceNetworks"] = {"objects": filtered_source_networks}
 
         current_destination_networks = rule_data.get("destinationNetworks", {}).get("objects", [])
         destination_networks = param.get("destination_networks_to_add", "")
-        destination_networks = [network.strip() for network in destination_networks.split(',') if network.strip()]
+        destination_networks = [network.strip() for network in destination_networks.split(",") if network.strip()]
         ret_val, destination_networks_objects = self.build_network_objects_list(destination_networks, domain_uuid)
         if phantom.is_fail(ret_val):
             return ret_val
         current_destination_networks.extend(destination_networks_objects)
         current_destination_networks_dic = {network["id"]: network for network in current_destination_networks}
         destination_networks_to_remove = param.get("destination_networks_to_remove", "")
-        destination_networks_to_remove = [network.strip() for network in destination_networks_to_remove.split(',') if network.strip()]
+        destination_networks_to_remove = [network.strip() for network in destination_networks_to_remove.split(",") if network.strip()]
 
-        filtered_destination_networks = [value for key, value in current_destination_networks_dic.items() if key not in destination_networks_to_remove]
+        filtered_destination_networks = [
+            value for key, value in current_destination_networks_dic.items() if key not in destination_networks_to_remove
+        ]
         rule_payload["destinationNetworks"] = {"objects": filtered_destination_networks}
 
         url = ACCESS_RULES_ID_ENDPOINT.format(domain_id=domain_uuid, policy_id=policy_id, rule_id=rule_id)
@@ -801,6 +913,138 @@ class FP_Connector(BaseConnector):
         action_result.add_data(response)
         summary = action_result.update_summary({})
         summary["Message"] = f"Successfully delete access control rule with id {rule_id}"
+        return action_result.set_status(phantom.APP_SUCCESS)
+
+    def _handle_list_devices(self, param: Dict[str, Any]) -> bool:
+        self.save_progress(f"In action handler for: {self.get_action_identifier()}")
+
+        action_result = self.add_action_result(ActionResult(dict(param)))
+        domain_uuid = self.get_domain_id(param.get("domain_name"))
+
+        url = DEVICES_ENDPOINT.format(domain_id=domain_uuid)
+
+        offset = 0
+        limit = 50
+        params = {"limit": limit}
+        while True:
+            params["offset"] = offset
+            ret_val, response = self._api_run("get", url, action_result, params=params)
+            if phantom.is_fail(ret_val):
+                return action_result.get_status()
+
+            try:
+                devices = response.get("items", [])
+                for device in devices:
+                    action_result.add_data(device)
+
+            except Exception as e:
+                message = "An error occurred while getting devices"
+                self.debug_print(f"{message}. {str(e)}")
+                return action_result.set_status(phantom.APP_ERROR, message)
+
+            if "paging" in response and "next" in response["paging"]:
+                offset += limit
+            else:
+                break
+
+        action_result.update_summary({"total_deices_returned": len(action_result.get_data())})
+
+        return action_result.set_status(phantom.APP_SUCCESS)
+
+    def get_deployable_devices(self, domain_id: str) -> Tuple[bool, Any]:
+        url = GET_DEPLOYABLE_DEVICES_ENDPOINT.format(domain_id=domain_id, isExpand=True)
+        deployable_devices = []
+        offset = 0
+        limit = 50
+        params = {"limit": limit, "expanded": True}
+        while True:
+            params["offset"] = offset
+            ret_val, response = self._api_run("get", url, self, params=params)
+            if phantom.is_fail(ret_val):
+                return phantom.APP_ERROR, []
+
+            try:
+                devices = response.get("items", [])
+                for item in devices:
+                    deployable_devices.append({"name": item["device"]["name"], "id": item["device"]["id"], "type": item["device"]["type"]})
+            except Exception as e:
+                message = "An error occurred while processing access rules"
+                self.debug_print(f"{message}. {str(e)}")
+                return phantom.APP_ERROR, []
+
+            if "paging" in response and "next" in response["paging"]:
+                offset += limit
+            else:
+                break
+
+        return phantom.APP_SUCCESS, deployable_devices
+
+    def _handle_get_deployable_devices(self, param: Dict[str, Any]) -> bool:
+        self.save_progress(f"In action handler for: {self.get_action_identifier()}")
+
+        action_result = self.add_action_result(ActionResult(dict(param)))
+        domain_uuid = self.get_domain_id(param.get("domain_name"))
+
+        ret_val, devices = self.get_deployable_devices(domain_uuid)
+
+        if phantom.is_fail(ret_val):
+            return action_result.set_status(phantom.APP_ERROR, "Unable to get deployable devices")
+
+        for device in devices:
+            action_result.add_data(device)
+
+        action_result.update_summary({"total_deployable_deices_returned": len(action_result.get_data())})
+
+        return action_result.set_status(phantom.APP_SUCCESS)
+
+    def _handle_deploy_devices(self, param: Dict[str, Any]) -> bool:
+        self.save_progress(f"In action handler for: {self.get_action_identifier()}")
+
+        action_result = self.add_action_result(ActionResult(dict(param)))
+        domain_uuid = self.get_domain_id(param.get("domain_name"))
+
+        devices_to_deploy = [device.strip() for device in param.get("devices", "").split(",") if device.strip()]
+        if not devices_to_deploy:
+            ret_val, devices = self.get_deployable_devices(domain_uuid)
+            if phantom.is_fail(ret_val):
+                return action_result.set_status(phantom.APP_ERROR, "Unable to get deployable devices")
+            for device in devices:
+                devices_to_deploy.append(device["id"])
+
+        if not devices_to_deploy:
+            summary = action_result.update_summary({})
+            summary["Message"] = "No devices to deploy"
+            return action_result.set_status(phantom.APP_SUCCESS)
+
+        url = DEPLOY_DEVICES_ENDPOINT.format(domain_id=domain_uuid)
+        body = {"type": "DeploymentRequest", "version": "0", "forceDeploy": True, "ignoreWarning": True, "deviceList": devices_to_deploy}
+
+        ret_val, response = self._api_run("post", url, action_result, body)
+
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
+
+        action_result.add_data(response)
+        summary = action_result.update_summary({})
+        summary["Message"] = "Successfully deployed devices"
+        return action_result.set_status(phantom.APP_SUCCESS)
+
+    def _handle_get_deployment_status(self, param: Dict[str, Any]) -> bool:
+        self.save_progress(f"In action handler for: {self.get_action_identifier()}")
+
+        action_result = self.add_action_result(ActionResult(dict(param)))
+        domain_uuid = self.get_domain_id(param.get("domain_name"))
+
+        deployment_id = param["deployment_id"]
+
+        url = DEPLOYMENT_STATUS_ENDPOINT.format(domain_id=domain_uuid, task_id=deployment_id)
+        ret_val, response = self._api_run("get", url, action_result)
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
+
+        action_result.add_data(response)
+        summary = action_result.update_summary({})
+        summary["Message"] = f"Successfully retrieved status for deployment {deployment_id}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
     def handle_action(self, param):
@@ -846,6 +1090,14 @@ class FP_Connector(BaseConnector):
             ret_val = self._handle_update_access_rule(param)
         elif action_id == "delete_access_rule":
             ret_val = self._handle_delete_access_rule(param)
+        elif action_id == "list_devices":
+            ret_val = self._handle_list_devices(param)
+        elif action_id == "get_deployable_devices":
+            ret_val = self._handle_get_deployable_devices(param)
+        elif action_id == "deploy_devices":
+            ret_val = self._handle_deploy_devices(param)
+        elif action_id == "get_deployment_status":
+            ret_val = self._handle_get_deployment_status(param)
 
         return ret_val
 

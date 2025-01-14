@@ -14,10 +14,13 @@
 # and limitations under the License.
 
 TOKEN_ENDPOINT = "/api/fmc_platform/v1/auth/generatetoken"
+REFRESH_ENDPOINT = "/api/fmc_platform/v1/auth/refreshtoken"
 HEADERS = {"Accept": "application/json"}
 STATE_FILE_CORRUPT_ERR = "Error occurred while loading the state file due to its unexpected format"
 DEFAULT_REQUEST_TIMEOUT = 30  # in seconds
 TOKEN_KEY = "X-auth-access-token"
+REFRESH_TOKEN_KEY = "X-auth-refresh-token"
+REFRESH_COUNT = "REFRESH_COUNT"
 DOMAINS = "domains"
 GET_HOSTS_ENDPOINT = "/api/fmc_config/v1/domain/{domain_id}/object/hosts"
 ENCRYPTION_ERR = "Error occurred while encrypting the state file"
@@ -29,6 +32,10 @@ ACCESS_POLICY_ENDPOINT = "/api/fmc_config/v1/domain/{domain_id}/policy/accesspol
 ACCESS_POLICY_ID_ENDPOINT = "/api/fmc_config/v1/domain/{domain_id}/policy/accesspolicies/{policy_id}"
 ACCESS_RULES_ENDPOINT = "/api/fmc_config/v1/domain/{domain_id}/policy/accesspolicies/{policy_id}/accessrules"
 ACCESS_RULES_ID_ENDPOINT = "/api/fmc_config/v1/domain/{domain_id}/policy/accesspolicies/{policy_id}/accessrules/{rule_id}"
+DEVICES_ENDPOINT = "/api/fmc_config/v1/domain/{domain_id}/devices/devicerecords"
+GET_DEPLOYABLE_DEVICES_ENDPOINT = "/api/fmc_config/v1/domain/{domain_id}/deployment/deployabledevices"
+DEPLOY_DEVICES_ENDPOINT = "/api/fmc_config/v1/domain/{domain_id}/deployment/deploymentrequests"
+DEPLOYMENT_STATUS_ENDPOINT = "/api/fmc_config/v1/domain/{domain_id}/job/taskstatuses/{task_id}"
 # OBJECT_TYPES = ["Network", "Host", "Range", "FQDN"]
 OBJECT_TYPES = ["Network", "Host", "Range"]
 CLOUD_HOST = "edge.{region}.cdo.cisco.com/api/rest/v1/cdfmc"

@@ -3,22 +3,22 @@
     "name": "Cisco Secure Firewall",
     "description": "This app interfaces with Cisco Firepower devices to add, update and delete network objects, network object groups, access policies and access rules",
     "publisher": "Splunk",
-    "package_name": "phantom_cisco_securefirewall",
+    "package_name": "phantom_ciscosecurefirewall",
     "type": "firewall",
     "license": "Copyright (c) 2024 Splunk Inc.",
     "main_module": "ciscosecurefirewall_connector.py",
     "app_version": "1.0.0",
     "utctime_updated": "2024-12-04T23:13:40.000000Z",
     "product_vendor": "Cisco Systems",
-    "product_name": "Cisco Firepower",
+    "product_name": "Cisco Secure Firewall",
     "product_version_regex": ".*",
-    "min_phantom_version": "6.2.2",
-    "python_version": "3.9",
+    "min_phantom_version": "6.3.0",
+    "python_version": "3",
     "logo": "logo_cisco.svg",
     "logo_dark": "logo_cisco_dark.svg",
     "fips_compliant": true,
     "latest_tested_versions": [
-        "Firepower Management Center 7.1.0"
+        "Firepower Management Center 7.6.0"
     ],
     "configuration": {
         "fmc_type": {
@@ -307,13 +307,11 @@
                 "name": {
                     "description": "Network object name",
                     "data_type": "string",
-                    "required": true,
                     "order": 1
                 },
                 "type": {
                     "description": "Network object type. Note this cannot change and is only used to identify the network object value you'd liek to update.",
                     "data_type": "string",
-                    "required": true,
                     "value_list": [
                        "Host",
                        "Network",
@@ -325,7 +323,6 @@
                 "value": {
                     "description": "Value of the network object. If type is Range specify value in the following format: ip1-ip2",
                     "data_type": "string",
-                    "required": true,
                     "order": 3
                 },
                 "domain_name": {
@@ -334,7 +331,98 @@
                     "order": 4
                 }
             },
-            "output": [],
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.object_id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.type",
+                    "data_type": "string",
+                    "example_values": [
+                        "Network"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.value",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.domain_name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.type",
+                    "data_type": "string",
+                    "example_values": [
+                        "Network"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.links.self",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.links.parent",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.value",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.domain.id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.domain.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.domain.type",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.ipType",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.domain.lastUser.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.domain.timestamp",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.domain.parentType",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.overridable",
+                    "data_type": "boolean"
+                }
+            ],
             "versions": "EQ(*)" 
         },
 
@@ -369,7 +457,31 @@
                     "order": 2
                 }
             },
-            "output": [],
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.object_id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.type",
+                    "data_type": "string",
+                    "example_values": [
+                        "Network"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.domain_name",
+                    "data_type": "string"
+                }
+            ],
             "versions": "EQ(*)" 
         },
         {
@@ -1890,6 +2002,228 @@
                 {
                     "data_path": "action_result.data.*.destinationNetworks.objects.*.overridable",
                     "data_type": "boolean"
+                }
+            ],
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "list devices",
+            "description": "Lists all devices belonging to a particular domain/tenant",
+            "type": "investigate",
+            "identifier": "list_devices",
+            "read_only": true,
+            "parameters": {
+                "domain_name": {
+                    "description": "Firepower Domain. If none is specified the default domain will be queried",
+                    "data_type": "string",
+                    "order": 0
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.domain_name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.type",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.links.self",
+                    "data_type": "string"
+                }
+            ],
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "get deployable devices",
+            "description": "List all devices with configuration chnges that are ready to be deployed",
+            "type": "investigate",
+            "identifier": "get_deployable_devices",
+            "read_only": true,
+            "parameters": {
+                "domain_name": {
+                    "description": "Firepower Domain. If none is specified the default domain will be queried",
+                    "data_type": "string",
+                    "order": 0
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.domain_name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.type",
+                    "data_type": "string",
+                    "example_values": [
+                        "SENSOR"
+                    ]
+                }
+            ],
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "deploy devices",
+            "description": "Deploy devices that are ready to deploy",
+            "type": "generic",
+            "identifier": "deploy_devices",
+            "read_only": true,
+            "parameters": {
+                "devices": {
+                    "description": "Device IDs of devices to deploy changes to. If left empty all devices with configuration changes will deploy",
+                    "data_type": "string",
+                    "order": 0
+                },
+                "domain_name": {
+                    "description": "Firepower Domain. If none is specified the default domain will be queried",
+                    "data_type": "string",
+                    "order": 1
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.devices",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.domain_name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.type",
+                    "data_type": "string",
+                    "example_values": [
+                        "DeploymentRequest"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.version",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.task.id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.task.links.self",
+                    "data_type": "string",
+                    "example_values": [
+                        "https://hostname/api/fmc_config/v1/domain/default/job/taskstatuses/77309722217"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.deviceList.*",
+                    "data_type": "string"
+                }
+            ],
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "get deployment status",
+            "description": "Get status of a deployment",
+            "type": "investigate",
+            "identifier": "get_deployment_status",
+            "read_only": true,
+            "parameters": {
+                "deployment_id": {
+                    "description": "Id of the deployment",
+                    "data_type": "string",
+                    "order": 0,
+                    "required": true
+                },
+                "domain_name": {
+                    "description": "Firepower Domain. If none is specified the default domain will be queried",
+                    "data_type": "string",
+                    "order": 1
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.deployment_id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.domain_name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "DeploymentRequest"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.task",
+                    "data_type": "string",
+                    "example_values": [
+                        "TaskStatus"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "Deploying",
+                        "Deployed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.deviceList.*",
+                    "data_type": "string"
                 }
             ],
             "versions": "EQ(*)"
