@@ -4,14 +4,14 @@
 Publisher: Splunk  
 Connector Version: 1.0.0  
 Product Vendor: Cisco Systems  
-Product Name: Cisco Firepower  
+Product Name: Cisco Secure Firewall  
 Product Version Supported (regex): ".\*"  
-Minimum Product Version: 6.2.2  
+Minimum Product Version: 6.3.0  
 
 This app interfaces with Cisco Firepower devices to add, update and delete network objects, network object groups, access policies and access rules
 
 ### Configuration variables
-This table lists the configuration variables required to operate Cisco Secure Firewall. These variables are specified when configuring a Cisco Firepower asset in Splunk SOAR.
+This table lists the configuration variables required to operate Cisco Secure Firewall. These variables are specified when configuring a Cisco Secure Firewall asset in Splunk SOAR.
 
 VARIABLE | REQUIRED | TYPE | DESCRIPTION
 -------- | -------- | ---- | -----------
@@ -42,6 +42,10 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 [create access control rule](#action-create-access-control-rule) - Creates an access control rule associated with a particular access control policy  
 [update access control rule](#action-update-access-control-rule) - Updates an access control rule associated with a particular access control policy  
 [delete access control rules](#action-delete-access-control-rules) - Deletes access control rule associated with a particular access control policy  
+[list devices](#action-list-devices) - Lists all devices belonging to a particular domain/tenant  
+[get deployable devices](#action-get-deployable-devices) - List all devices with configuration chnges that are ready to be deployed  
+[deploy devices](#action-deploy-devices) - Deploy devices that are ready to deploy  
+[get deployment status](#action-get-deployment-status) - Get status of a deployment  
 
 ## action: 'test connectivity'
 Validate the asset configuration for connectivity
@@ -128,13 +132,34 @@ Read only: **False**
 PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 --------- | -------- | ----------- | ---- | --------
 **object_id** |  required  | Network object id | string | 
-**name** |  required  | Network object name | string | 
-**type** |  required  | Network object type. Note this cannot change and is only used to identify the network object value you'd liek to update. | string | 
-**value** |  required  | Value of the network object. If type is Range specify value in the following format: ip1-ip2 | string | 
+**name** |  optional  | Network object name | string | 
+**type** |  optional  | Network object type. Note this cannot change and is only used to identify the network object value you'd liek to update. | string | 
+**value** |  optional  | Value of the network object. If type is Range specify value in the following format: ip1-ip2 | string | 
 **domain_name** |  optional  | Firepower Domain. If none is specified the default domain will be queried | string | 
 
 #### Action Output
-No Output  
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string |  |   success  failed 
+action_result.parameter.object_id | string |  |  
+action_result.parameter.name | string |  |  
+action_result.parameter.type | string |  |   Network 
+action_result.parameter.value | string |  |  
+action_result.parameter.domain_name | string |  |  
+action_result.data.\*.id | string |  |  
+action_result.data.\*.name | string |  |  
+action_result.data.\*.type | string |  |   Network 
+action_result.data.\*.links.self | string |  |  
+action_result.data.\*.links.parent | string |  |  
+action_result.data.\*.value | string |  |  
+action_result.data.\*.metadata.domain.id | string |  |  
+action_result.data.\*.metadata.domain.name | string |  |  
+action_result.data.\*.metadata.domain.type | string |  |  
+action_result.data.\*.metadata.ipType | string |  |  
+action_result.data.\*.metadata.domain.lastUser.name | string |  |  
+action_result.data.\*.metadata.domain.timestamp | numeric |  |  
+action_result.data.\*.metadata.domain.parentType | string |  |  
+action_result.data.\*.metadata.overridable | boolean |  |    
 
 ## action: 'delete network object'
 Deletes a network object in FMC
@@ -150,7 +175,12 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **domain_name** |  optional  | Firepower Domain. If none is specified the default domain will be queried | string | 
 
 #### Action Output
-No Output  
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string |  |   success  failed 
+action_result.parameter.object_id | string |  |  
+action_result.parameter.type | string |  |   Network 
+action_result.parameter.domain_name | string |  |    
 
 ## action: 'get network group objects'
 Gets all network group objects in FMC host or a specfic network group
@@ -582,4 +612,93 @@ action_result.data.\*.sendEventsToFMC | boolean |  |
 action_result.data.\*.destinationNetworks.objects.\*.id | string |  |  
 action_result.data.\*.destinationNetworks.objects.\*.name | string |  |  
 action_result.data.\*.destinationNetworks.objects.\*.type | string |  |   NetworkGroup  Network 
-action_result.data.\*.destinationNetworks.objects.\*.overridable | boolean |  |  
+action_result.data.\*.destinationNetworks.objects.\*.overridable | boolean |  |    
+
+## action: 'list devices'
+Lists all devices belonging to a particular domain/tenant
+
+Type: **investigate**  
+Read only: **True**
+
+#### Action Parameters
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**domain_name** |  optional  | Firepower Domain. If none is specified the default domain will be queried | string | 
+
+#### Action Output
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string |  |   success  failed 
+action_result.parameter.domain_name | string |  |  
+action_result.data.\*.id | string |  |  
+action_result.data.\*.name | string |  |  
+action_result.data.\*.type | string |  |  
+action_result.data.\*.links.self | string |  |    
+
+## action: 'get deployable devices'
+List all devices with configuration chnges that are ready to be deployed
+
+Type: **investigate**  
+Read only: **True**
+
+#### Action Parameters
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**domain_name** |  optional  | Firepower Domain. If none is specified the default domain will be queried | string | 
+
+#### Action Output
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string |  |   success  failed 
+action_result.parameter.domain_name | string |  |  
+action_result.data.\*.id | string |  |  
+action_result.data.\*.name | string |  |  
+action_result.data.\*.type | string |  |   SENSOR   
+
+## action: 'deploy devices'
+Deploy devices that are ready to deploy
+
+Type: **generic**  
+Read only: **True**
+
+#### Action Parameters
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**devices** |  optional  | Device IDs of devices to deploy changes to. If left empty all devices with configuration changes will deploy | string | 
+**domain_name** |  optional  | Firepower Domain. If none is specified the default domain will be queried | string | 
+
+#### Action Output
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string |  |   success  failed 
+action_result.parameter.devices | string |  |  
+action_result.parameter.domain_name | string |  |  
+action_result.data.\*.type | string |  |   DeploymentRequest 
+action_result.data.\*.version | string |  |  
+action_result.data.\*.metadata.task.id | string |  |  
+action_result.data.\*.metadata.task.links.self | string |  |   https://hostname/api/fmc_config/v1/domain/default/job/taskstatuses/77309722217 
+action_result.data.\*.deviceList.\* | string |  |    
+
+## action: 'get deployment status'
+Get status of a deployment
+
+Type: **investigate**  
+Read only: **True**
+
+#### Action Parameters
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**deployment_id** |  required  | Id of the deployment | string | 
+**domain_name** |  optional  | Firepower Domain. If none is specified the default domain will be queried | string | 
+
+#### Action Output
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string |  |   success  failed 
+action_result.parameter.deployment_id | string |  |  
+action_result.parameter.domain_name | string |  |  
+action_result.data.\*.id | string |  |   DeploymentRequest 
+action_result.data.\*.task | string |  |   TaskStatus 
+action_result.data.\*.status | string |  |   Deploying  Deployed 
+action_result.data.\*.message | string |  |  
+action_result.data.\*.deviceList.\* | string |  |  
