@@ -1,11 +1,11 @@
 {
     "appid": "21834fdf-826d-4595-a036-d7b8841ab798",
     "name": "Cisco Secure Firewall",
-    "description": "This app interfaces with Cisco Firepower devices to add, update and delete network objects, network object groups, access policies and access rules",
+    "description": "This app interfaces with Cisco Firepower devices to adds, updates and deletes network objects, network object groups, access policies and access rules",
     "publisher": "Splunk",
     "package_name": "phantom_ciscosecurefirewall",
     "type": "firewall",
-    "license": "Copyright (c) 2024 Splunk Inc.",
+    "license": "Copyright (c) 2025 Splunk Inc.",
     "main_module": "ciscosecurefirewall_connector.py",
     "app_version": "1.0.0",
     "utctime_updated": "2024-12-04T23:13:40.000000Z",
@@ -39,27 +39,27 @@
         "verify_server_cert": {
             "description": "Verify server certificate",
             "data_type": "boolean",
-            "order": 1
+            "order": 2
         },
         "username": {
             "description": "User with access to the on-prem FMC node",
             "data_type": "string",
-            "order": 2
+            "order": 3
         },
         "password": {
             "description": "Password for the on-prem FMC node",
             "data_type": "password",
-            "order": 3
+            "order": 4
         },
         "domain_name": {
             "description": "Default firepower domain",
             "data_type": "string",
-            "order": 4
-        },
-        "cloud_api_key": {
-            "description": "Api key for cloud delivered FMC",
-            "data_type": "string",
             "order": 5
+        },
+        "api_key": {
+            "description": "Api key for cloud delivered FMC",
+            "data_type": "password",
+            "order": 6
         },
         "region": {
             "description": "Region your Cisco Security Cloud Control is deployed in",
@@ -71,7 +71,7 @@
                 "AUS",
                 "IN"
              ],
-            "order": 6
+            "order": 7
         }
     },
     "actions": [
@@ -90,7 +90,7 @@
             "description": "List network object in FMC",
             "type": "investigate",
             "read_only": true,
-            "identifier": "list_network_ojects",
+            "identifier": "list_network_objects",
             "parameters":{
                 "name": {
                     "description": "Network object name to filter results by",
@@ -124,6 +124,18 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.parameter.name",
                     "data_type": "string"
                 },
@@ -140,18 +152,24 @@
                 },
                 {
                     "data_path": "action_result.data.*.id",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_order": 0,
+                    "column_name": "Object Id"
                 },
                 {
                     "data_path": "action_result.data.*.name",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Object Name",
+                    "column_order": 1
                 },
                 {
                     "data_path": "action_result.data.*.type",
                     "data_type": "string",
                     "example_values": [
                         "Network"
-                    ]
+                    ],
+                    "column_name": "Object Type",
+                    "column_order": 2
                 },
                 {
                     "data_path": "action_result.data.*.links.self",
@@ -162,6 +180,10 @@
                     "data_type": "string"
                 }
             ],
+            "render": {
+                "title": "Network Objects",
+                "type": "table"
+            },
             "versions": "EQ(*)" 
         },
         {
@@ -211,6 +233,18 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.parameter.name",
                     "data_type": "string"
                 },
@@ -231,18 +265,24 @@
                 },
                 {
                     "data_path": "action_result.data.*.id",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_order": 0,
+                    "column_name": "Object Id"
                 },
                 {
                     "data_path": "action_result.data.*.name",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Object Name",
+                    "column_order": 1
                 },
                 {
                     "data_path": "action_result.data.*.type",
                     "data_type": "string",
                     "example_values": [
                         "Network"
-                    ]
+                    ],
+                    "column_name": "Object Type",
+                    "column_order": 2
                 },
                 {
                     "data_path": "action_result.data.*.links.self",
@@ -254,7 +294,9 @@
                 },
                 {
                     "data_path": "action_result.data.*.value",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Object Value",
+                    "column_order": 3
                 },
                 {
                     "data_path": "action_result.data.*.metadata.domain.id",
@@ -289,6 +331,10 @@
                     "data_type": "boolean"
                 }
             ],
+            "render": {
+                "title": "Create Network Object",
+                "type": "table"
+            },
             "versions": "EQ(*)" 
         },
         {
@@ -341,6 +387,18 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.parameter.object_id",
                     "data_type": "string"
                 },
@@ -365,18 +423,24 @@
                 },
                 {
                     "data_path": "action_result.data.*.id",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Object Id",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.data.*.name",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Object Name",
+                    "column_order": 1
                 },
                 {
                     "data_path": "action_result.data.*.type",
                     "data_type": "string",
                     "example_values": [
                         "Network"
-                    ]
+                    ],
+                    "column_name": "Object Type",
+                    "column_order": 2
                 },
                 {
                     "data_path": "action_result.data.*.links.self",
@@ -388,7 +452,9 @@
                 },
                 {
                     "data_path": "action_result.data.*.value",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Object Value",
+                    "column_order": 3
                 },
                 {
                     "data_path": "action_result.data.*.metadata.domain.id",
@@ -423,6 +489,10 @@
                     "data_type": "boolean"
                 }
             ],
+            "render": {
+                "title": "Update Network Object",
+                "type": "table"
+            },
             "versions": "EQ(*)" 
         },
 
@@ -467,6 +537,18 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.parameter.object_id",
                     "data_type": "string"
                 },
@@ -480,8 +562,79 @@
                 {
                     "data_path": "action_result.parameter.domain_name",
                     "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.id",
+                    "data_type": "string",
+                    "column_name": "Object Id",
+                    "column_order": 0
+                },
+                {
+                    "data_path": "action_result.data.*.name",
+                    "data_type": "string",
+                    "column_name": "Object Name",
+                    "column_order": 1
+                },
+                {
+                    "data_path": "action_result.data.*.type",
+                    "data_type": "string",
+                    "example_values": [
+                        "Network"
+                    ],
+                    "column_name": "Object Type",
+                    "column_order": 2
+                },
+                {
+                    "data_path": "action_result.data.*.links.self",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.links.parent",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.value",
+                    "data_type": "string",
+                    "column_name": "Object Value",
+                    "column_order": 3
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.domain.id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.domain.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.domain.type",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.ipType",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.domain.lastUser.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.domain.timestamp",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.domain.parentType",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.overridable",
+                    "data_type": "boolean"
                 }
             ],
+            "render": {
+                "title": "Delete Network Object",
+                "type": "table"
+            },
             "versions": "EQ(*)" 
         },
         {
@@ -512,6 +665,18 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.parameter.group_name",
                     "data_type": "string"
                 },
@@ -521,13 +686,21 @@
                 },
                 {
                     "data_path": "action_result.data.*.uuid",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Group Id",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.data.*.name",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Group Name",
+                    "column_order": 1
                 }
             ],
+            "render": {
+                "title": "Network Groups",
+                "type": "table"
+            },
             "versions": "EQ(*)"
         },
         {
@@ -549,13 +722,18 @@
                     "example_values": [
                         "b2df29e8-5e6f-4c5d-9d5e-3fa9b3c9467b, a1c2f7d9-4b5e-42b1-8d9f-2f6b4a8e5e3c"
                     ],
-                    "required": true,
                     "order": 1
+                },
+                "overridable": {
+                    "data_type": "boolean",
+                    "description": "Changes to this won't affect parent policies or configurations",
+                    "order": 2,
+                    "default": false
                 },
                 "domain_name": {
                     "description": "Firepower Domain. If none is specified the default domain will be queried",
                     "data_type": "string",
-                    "order": 2
+                    "order": 3
                 }
             },
             "output": [
@@ -566,6 +744,18 @@
                         "success",
                         "failed"
                     ]
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.parameter.name",
@@ -584,11 +774,15 @@
                 },
                 {
                     "data_path": "action_result.data.*.id",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Group Id",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.data.*.name",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Group Name",
+                    "column_order": 1
                 },
                 {
                     "data_path": "action_result.data.*.type",
@@ -645,6 +839,10 @@
                     "data_type": "boolean"
                 }
             ],
+            "render": {
+                "title": "Create Network Group",
+                "type": "table"
+            },
             "versions": "EQ(*)"
         },
         {
@@ -697,6 +895,18 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.parameter.network_group_id",
                     "data_type": "string"
                 },
@@ -724,11 +934,15 @@
                 },
                 {
                     "data_path": "action_result.data.*.id",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Group Id",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.data.*.name",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Group Name",
+                    "column_order": 1
                 },
                 {
                     "data_path": "action_result.data.*.type",
@@ -785,6 +999,10 @@
                     "data_type": "boolean"
                 }
             ],
+            "render": {
+                "title": "Update Network Group",
+                "type": "table"
+            },
             "versions": "EQ(*)"
         },
         {
@@ -816,6 +1034,18 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.parameter.network_group_id",
                     "data_type": "string"
                 },
@@ -825,11 +1055,15 @@
                 },
                 {
                     "data_path": "action_result.data.*.id",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Group Id",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.data.*.name",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Group Name",
+                    "column_order": 1
                 },
                 {
                     "data_path": "action_result.data.*.type",
@@ -886,6 +1120,10 @@
                     "data_type": "boolean"
                 }
             ],
+            "render": {
+                "title": "Delete Network Group",
+                "type": "table"
+            },
             "versions": "EQ(*)"
         },
         {
@@ -911,6 +1149,18 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.parameter.domain_name",
                     "data_type": "string"
                 },
@@ -919,16 +1169,24 @@
                     "data_type": "string",
                     "example_values": [
                         "new-policy"
-                    ]
+                    ],
+                    "column_name": "Policy Name",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.data.*.policy_id",
                     "data_type": "string",
                     "example_values": [
                         "00000000-0000-0ed3-0000-012884902138"
-                    ]
+                    ],
+                    "column_name": "Policy Id",
+                    "column_order": 1
                 }
             ],
+            "render": {
+                "title": "Access Control Policies",
+                "type": "table"
+            },
             "versions": "EQ(*)"
         },
         {
@@ -955,9 +1213,7 @@
                     "required": true,
                     "value_list": [
                        "ALLOW",
-                       "BLOCK",
-                       "TRUST",
-                       "MONITOR"
+                       "TRUST"
                     ],
                     "order": 2
                 },
@@ -977,6 +1233,18 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.parameter.name",
                     "data_type": "string"
                 },
@@ -994,14 +1262,18 @@
                 },
                 {
                     "data_path": "action_result.data.*.id",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_order": 0,
+                    "column_name": "Policy Id"
                 },
                 {
                     "data_path": "action_result.data.*.name",
                     "data_type": "string",
                     "example_values": [
                         "new-policy"
-                    ]
+                    ],
+                    "column_name": "Policy Name",
+                    "column_order": 1
                 },
                 {
                     "data_path": "action_result.data.*.type",
@@ -1033,6 +1305,10 @@
                     "data_type": "string"
                 }
             ],
+            "render": {
+                "title": "Create Access Control Policies",
+                "type": "table"
+            },
             "versions": "EQ(*)"
         },
         {
@@ -1085,6 +1361,18 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.parameter.policy_id",
                     "data_type": "string"
                 },
@@ -1106,14 +1394,18 @@
                 },
                 {
                     "data_path": "action_result.data.*.id",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Policy Id",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.data.*.name",
                     "data_type": "string",
                     "example_values": [
                         "new-policy"
-                    ]
+                    ],
+                    "column_name": "Policy Name",
+                    "column_order": 1
                 },
                 {
                     "data_path": "action_result.data.*.type",
@@ -1160,9 +1452,15 @@
                     "data_type": "string",
                     "example_values": [
                         "BLOCK"
-                    ]
+                    ],
+                    "column_name": "Policy Action",
+                    "column_order": 2
                 }
             ],
+            "render": {
+                "title": "Update Access Control Policies",
+                "type": "table"
+            },
             "versions": "EQ(*)"
         },
         {
@@ -1194,19 +1492,19 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.parameter.policy_id",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.parameter.name",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.parameter.description",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.parameter.action",
                     "data_type": "string"
                 },
                 {
@@ -1215,14 +1513,18 @@
                 },
                 {
                     "data_path": "action_result.data.*.id",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Policy Id",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.data.*.name",
                     "data_type": "string",
                     "example_values": [
                         "new-policy"
-                    ]
+                    ],
+                    "column_name": "Policy Name",
+                    "column_order": 1
                 },
                 {
                     "data_path": "action_result.data.*.type",
@@ -1251,7 +1553,9 @@
                 },
                 {
                     "data_path": "action_result.data.*.description",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Policy Description",
+                    "column_order": 2
                 },
                 {
                     "data_path": "action_result.data.*.defaultAction.id",
@@ -1269,7 +1573,9 @@
                     "data_type": "string",
                     "example_values": [
                         "BLOCK"
-                    ]
+                    ],
+                    "column_name": "Policy Action",
+                    "column_order": 3
                 },
                 {
                     "data_path": "action_result.data.*.securityIntelligence.id",
@@ -1287,6 +1593,10 @@
                     "data_type": "string"
                 }
             ],
+            "render": {
+                "title": "Delete Access Control Policies",
+                "type": "table"
+            },
             "versions": "EQ(*)"
         },
         {
@@ -1323,6 +1633,18 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.parameter.policy_id",
                     "data_type": "string"
                 },
@@ -1332,16 +1654,24 @@
                 },
                 {
                     "data_path": "action_result.data.*.id",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Rule Id",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.data.*.name",
                     "data_type": "string",
                     "example_values": [
-                        "new-policy"
-                    ]
+                        "new-rule"
+                    ],
+                    "column_name": "Rule Name",
+                    "column_order": 1
                 }
             ],
+            "render": {
+                "title": "Access Control Rules",
+                "type": "table"
+            },
             "versions": "EQ(*)"
         },
         {
@@ -1407,6 +1737,18 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.parameter.policy_id",
                     "data_type": "string"
                 },
@@ -1445,11 +1787,15 @@
                 },
                 {
                     "data_path": "action_result.data.*.id",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Rule Id",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.data.*.name",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Rule Name",
+                    "column_order": 1
                 },
                 {
                     "data_path": "action_result.data.*.type",
@@ -1467,7 +1813,9 @@
                     "data_type": "string",
                     "example_values": [
                         "BLOCK"
-                    ]
+                    ],
+                    "column_name": "Rule Action",
+                    "column_order": 2
                 },
                 {
                     "data_path": "action_result.data.*.logEnd",
@@ -1475,7 +1823,9 @@
                 },
                 {
                     "data_path": "action_result.data.*.enabled",
-                    "data_type": "boolean"
+                    "data_type": "boolean",
+                    "column_name": "Enabled",
+                    "column_order": 3
                 },
                 {
                     "data_path": "action_result.data.*.logBegin",
@@ -1541,6 +1891,7 @@
                 {
                     "data_path": "action_result.data.*.destinationNetworks.objects.*.id",
                     "data_type": "string"
+
                 },
                 {
                     "data_path": "action_result.data.*.destinationNetworks.objects.*.name",
@@ -1558,6 +1909,10 @@
                     "data_type": "boolean"
                 }
             ],
+            "render": {
+                "title": "Create Access Control Rules",
+                "type": "table"
+            },
             "versions": "EQ(*)"
         },
         {
@@ -1636,6 +1991,18 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.parameter.rule_id",
                     "data_type": "string"
                 },
@@ -1692,11 +2059,15 @@
                 },
                 {
                     "data_path": "action_result.data.*.id",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Rule Id",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.data.*.name",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Rule Name",
+                    "column_order": 1
                 },
                 {
                     "data_path": "action_result.data.*.type",
@@ -1714,7 +2085,9 @@
                     "data_type": "string",
                     "example_values": [
                         "BLOCK"
-                    ]
+                    ],
+                    "column_name": "Rule Action",
+                    "column_order": 2
                 },
                 {
                     "data_path": "action_result.data.*.logEnd",
@@ -1722,7 +2095,9 @@
                 },
                 {
                     "data_path": "action_result.data.*.enabled",
-                    "data_type": "boolean"
+                    "data_type": "boolean",
+                    "column_name": "Enabled",
+                    "column_order": 3
                 },
                 {
                     "data_path": "action_result.data.*.logBegin",
@@ -1823,6 +2198,10 @@
                     "data_type": "boolean"
                 }
             ],
+            "render": {
+                "title": "Update Access Control Rules",
+                "type": "table"
+            },
             "versions": "EQ(*)"
         },
         {
@@ -1860,6 +2239,18 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.parameter.rule_id",
                     "data_type": "string"
                 },
@@ -1873,11 +2264,15 @@
                 },
                 {
                     "data_path": "action_result.data.*.id",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Rule Id",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.data.*.name",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Rule Name",
+                    "column_order": 1
                 },
                 {
                     "data_path": "action_result.data.*.type",
@@ -2004,6 +2399,10 @@
                     "data_type": "boolean"
                 }
             ],
+            "render": {
+                "title": "Delete Access Control Rules",
+                "type": "table"
+            },
             "versions": "EQ(*)"
         },
         {
@@ -2029,26 +2428,51 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.parameter.domain_name",
                     "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.id",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Device Id",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.data.*.name",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Device Name",
+                    "column_order": 1
                 },
                 {
                     "data_path": "action_result.data.*.type",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "example_values": [
+                        "SENSOR"
+                    ],
+                    "column_name": "Device Type",
+                    "column_order": 2
                 },
                 {
                     "data_path": "action_result.data.*.links.self",
                     "data_type": "string"
                 }
             ],
+            "render": {
+                "title": "List Devices",
+                "type": "table"
+            },
             "versions": "EQ(*)"
         },
         {
@@ -2074,25 +2498,47 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.parameter.domain_name",
                     "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.id",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Device Id",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.data.*.name",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Device Name",
+                    "column_order": 1
                 },
                 {
                     "data_path": "action_result.data.*.type",
                     "data_type": "string",
                     "example_values": [
                         "SENSOR"
-                    ]
+                    ],
+                    "column_name": "Device Type",
+                    "column_order": 2
                 }
             ],
+            "render": {
+                "title": "Get Deployable Devices",
+                "type": "table"
+            },
             "versions": "EQ(*)"
         },
         {
@@ -2123,6 +2569,18 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.parameter.devices",
                     "data_type": "string"
                 },
@@ -2139,7 +2597,9 @@
                 },
                 {
                     "data_path": "action_result.data.*.version",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Version",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.data.*.metadata.task.id",
@@ -2154,9 +2614,15 @@
                 },
                 {
                     "data_path": "action_result.data.*.deviceList.*",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Devices",
+                    "column_order": 1
                 }
             ],
+            "render": {
+                "title": "Deploy Devices",
+                "type": "table"
+            },
             "versions": "EQ(*)"
         },
         {
@@ -2188,6 +2654,18 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.parameter.deployment_id",
                     "data_type": "string"
                 },
@@ -2200,7 +2678,9 @@
                     "data_type": "string",
                     "example_values": [
                         "DeploymentRequest"
-                    ]
+                    ],
+                    "column_name": "Deployment Id",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.data.*.task",
@@ -2215,17 +2695,25 @@
                     "example_values": [
                         "Deploying",
                         "Deployed"
-                    ]
+                    ],
+                    "column_name": "Deployment Status",
+                    "column_order": 1
                 },
                 {
                     "data_path": "action_result.data.*.message",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Deployment Message",
+                    "column_order": 2
                 },
                 {
                     "data_path": "action_result.data.*.deviceList.*",
                     "data_type": "string"
                 }
             ],
+            "render": {
+                "title": "Get Deployment Status",
+                "type": "table"
+            },
             "versions": "EQ(*)"
         }
     ],
