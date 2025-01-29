@@ -34,7 +34,7 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 [create network group object](#action-create-network-group-object) - Create a network group object \
 [update network group object](#action-update-network-group-object) - Update a network group object \
 [delete network group object](#action-delete-network-group-object) - Delete a network group object \
-[get access control policies](#action-get-access-control-policies) - Gets all access control polcies in the FMC host for a particular domain \
+[get access control policies](#action-get-access-control-policies) - Gets all or a particular access control policy in the FMC host for a particular domain \
 [create access control policy](#action-create-access-control-policy) - Create an access control policy \
 [update access control policy](#action-update-access-control-policy) - Update an access control policy \
 [delete access control policies](#action-delete-access-control-policies) - Deleted the specified access control policy \
@@ -42,6 +42,10 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 [create access control rule](#action-create-access-control-rule) - Creates an access control rule associated with a particular access control policy \
 [update access control rule](#action-update-access-control-rule) - Updates an access control rule associated with a particular access control policy \
 [delete access control rules](#action-delete-access-control-rules) - Deletes access control rule associated with a particular access control policy \
+[list intrusion policies](#action-list-intrusion-policies) - Gets all intrusion polcies in the FMC host for a particular domain \
+[create intrusion policy](#action-create-intrusion-policy) - Create an intrusion policy \
+[update intrusion policy](#action-update-intrusion-policy) - Update an intrusion policy \
+[delete intrusion policies](#action-delete-intrusion-policies) - Deleted the specified access intrusion policy \
 [list devices](#action-list-devices) - Lists all devices belonging to a particular domain/tenant \
 [get deployable devices](#action-get-deployable-devices) - List all devices with configuration chnges that are ready to be deployed \
 [deploy devices](#action-deploy-devices) - Deploy devices that are ready to deploy \
@@ -378,7 +382,7 @@ action_result.data.\*.metadata.overridable | boolean | | |
 
 ## action: 'get access control policies'
 
-Gets all access control polcies in the FMC host for a particular domain
+Gets all or a particular access control policy in the FMC host for a particular domain
 
 Type: **investigate** \
 Read only: **True**
@@ -387,6 +391,7 @@ Read only: **True**
 
 PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 --------- | -------- | ----------- | ---- | --------
+**policy_id** | optional | Id of the policy to retrieve | string | |
 **domain_name** | optional | Firepower Domain. If none is specified the default domain will be queried | string | |
 
 #### Action Output
@@ -449,7 +454,7 @@ Read only: **False**
 PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 --------- | -------- | ----------- | ---- | --------
 **policy_id** | required | Id of the policy to update | string | |
-**name** | optional | Name of the network group | string | |
+**name** | optional | Name of the policy | string | |
 **description** | optional | Description of the policy | string | |
 **action** | optional | Type of action to take on matching traffic | string | |
 **domain_name** | optional | Firepower Domain. If none is specified the default domain will be queried | string | |
@@ -724,6 +729,154 @@ action_result.data.\*.destinationNetworks.objects.\*.id | string | | |
 action_result.data.\*.destinationNetworks.objects.\*.name | string | | |
 action_result.data.\*.destinationNetworks.objects.\*.type | string | | NetworkGroup Network |
 action_result.data.\*.destinationNetworks.objects.\*.overridable | boolean | | |
+
+## action: 'list intrusion policies'
+
+Gets all intrusion polcies in the FMC host for a particular domain
+
+Type: **investigate** \
+Read only: **True**
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**policy_id** | optional | Intrusion policy to retrieve | string | |
+**domain_name** | optional | Firepower Domain. If none is specified the default domain will be queried | string | |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string | | success failed |
+action_result.message | string | | |
+summary.total_objects | numeric | | |
+summary.total_objects_successful | numeric | | |
+action_result.parameter.domain_name | string | | |
+action_result.data.\*.name | string | | new-policy |
+action_result.data.\*.policy_id | string | | 00000000-0000-0ed3-0000-012884902138 |
+
+## action: 'create intrusion policy'
+
+Create an intrusion policy
+
+Type: **generic** \
+Read only: **False**
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**name** | required | Name of the intrusion policy | string | |
+**description** | optional | Description of the intrusion policy | string | |
+**base_policy** | required | Base intrusion policy ID. Can be found using list intrusion policies | string | |
+**inspection_mode** | optional | The inspection mode for the Snort 3 engine | string | |
+**domain_name** | optional | Firepower Domain. If none is specified the default domain will be queried | string | |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string | | success failed |
+action_result.message | string | | |
+summary.total_objects | numeric | | |
+summary.total_objects_successful | numeric | | |
+action_result.parameter.name | string | | |
+action_result.parameter.description | string | | |
+action_result.parameter.base_policy | string | | |
+action_result.parameter.inspection_mode | string | | |
+action_result.parameter.domain_name | string | | |
+action_result.data.\*.id | string | | |
+action_result.data.\*.name | string | | new-policy |
+action_result.data.\*.type | string | | intrusionpolicy |
+action_result.data.\*.basePolicy.id | string | | |
+action_result.data.\*.basePolicy.name | string | | Balanced Security and Connectivity |
+action_result.data.\*.basePolicy.type | string | | intrusionpolicy |
+action_result.data.\*.basePolicy.inspectionMode | string | | DETECTION |
+action_result.data.\*.basePolicy.isSystemDefined | boolean | | |
+action_result.data.\*.description | string | | |
+action_result.data.\*.inspectionMode | string | | DETECTION |
+
+## action: 'update intrusion policy'
+
+Update an intrusion policy
+
+Type: **generic** \
+Read only: **False**
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**policy_id** | required | Id of the intrusion policy to update | string | |
+**name** | optional | Name of the policy | string | |
+**description** | optional | Description of the policy | string | |
+**base_policy** | optional | Base intrusion policy ID. Can be found using list intrusion policies | string | |
+**inspection_mode** | optional | The inspection mode for the Snort 3 engine | string | |
+**replicate_inspection_mode** | optional | Whether to replicate inspection_mode from Snort 3 to Snort | boolean | |
+**domain_name** | optional | Firepower Domain. If none is specified the default domain will be queried | string | |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string | | success failed |
+action_result.message | string | | |
+summary.total_objects | numeric | | |
+summary.total_objects_successful | numeric | | |
+action_result.parameter.name | string | | |
+action_result.parameter.description | string | | |
+action_result.parameter.base_policy | string | | |
+action_result.parameter.inspection_mode | string | | |
+action_result.parameter.domain_name | string | | |
+action_result.data.\*.id | string | | |
+action_result.data.\*.name | string | | new-policy |
+action_result.data.\*.type | string | | intrusionpolicy |
+action_result.data.\*.basePolicy.id | string | | |
+action_result.data.\*.basePolicy.name | string | | Balanced Security and Connectivity |
+action_result.data.\*.basePolicy.type | string | | intrusionpolicy |
+action_result.data.\*.basePolicy.inspectionMode | string | | DETECTION |
+action_result.data.\*.basePolicy.isSystemDefined | boolean | | |
+action_result.data.\*.description | string | | |
+action_result.data.\*.inspectionMode | string | | DETECTION |
+
+## action: 'delete intrusion policies'
+
+Deleted the specified access intrusion policy
+
+Type: **generic** \
+Read only: **False**
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**policy_id** | required | Id of the policy to delete | string | |
+**domain_name** | optional | Firepower Domain. If none is specified the default domain will be queried | string | |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string | | success failed |
+action_result.message | string | | |
+summary.total_objects | numeric | | |
+summary.total_objects_successful | numeric | | |
+action_result.parameter.name | string | | |
+action_result.parameter.description | string | | |
+action_result.parameter.base_policy | string | | |
+action_result.parameter.inspection_mode | string | | |
+action_result.parameter.domain_name | string | | |
+action_result.data.\*.id | string | | |
+action_result.data.\*.name | string | | new-policy |
+action_result.data.\*.type | string | | intrusionpolicy |
+action_result.data.\*.basePolicy.id | string | | |
+action_result.data.\*.basePolicy.name | string | | Balanced Security and Connectivity |
+action_result.data.\*.basePolicy.type | string | | intrusionpolicy |
+action_result.data.\*.basePolicy.inspectionMode | string | | DETECTION |
+action_result.data.\*.basePolicy.isSystemDefined | boolean | | |
+action_result.data.\*.description | string | | |
+action_result.data.\*.inspectionMode | string | | DETECTION |
 
 ## action: 'list devices'
 
