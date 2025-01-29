@@ -1128,15 +1128,20 @@
         },
         {
             "action": "get access control policies",
-            "description": "Gets all access control polcies in the FMC host for a particular domain",
+            "description": "Gets all or a particular access control policy in the FMC host for a particular domain",
             "type": "investigate",
             "identifier": "get_access_policies",
             "read_only": true,
             "parameters": {
+                "policy_id": {
+                    "description": "Id of the policy to retrieve",
+                    "data_type": "string",
+                    "order": 0
+                },
                 "domain_name": {
                     "description": "Firepower Domain. If none is specified the default domain will be queried",
                     "data_type": "string",
-                    "order": 0
+                    "order": 1
                 }
             },
             "output": [
@@ -1325,7 +1330,7 @@
                     "order": 0
                 },
                 "name": {
-                    "description": "Name of the network group",
+                    "description": "Name of the policy",
                     "data_type": "string",
                     "order": 1
                 },
@@ -1701,7 +1706,10 @@
                         "ALLOW",
                         "BLOCK",
                         "TRUST",
-                        "MONITOR"
+                        "MONITOR",
+                        "BLOCK_RESET",
+                        "BLOCK_INTERACTIVE",
+                        "BLOCK_RESET_INTERACTIVE"
                      ],
                     "order": 2
                 },
@@ -1946,7 +1954,10 @@
                         "ALLOW",
                         "BLOCK",
                         "TRUST",
-                        "MONITOR"
+                        "MONITOR",
+                        "BLOCK_RESET",
+                        "BLOCK_INTERACTIVE",
+                        "BLOCK_RESET_INTERACTIVE"
                      ],
                     "order": 3
                 },
@@ -2401,6 +2412,528 @@
             ],
             "render": {
                 "title": "Delete Access Control Rules",
+                "type": "table"
+            },
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "list intrusion policies",
+            "description": "Gets all intrusion polcies in the FMC host for a particular domain",
+            "type": "investigate",
+            "identifier": "list_intrusion_policies",
+            "read_only": true,
+            "parameters": {
+                "policy_id": {
+                    "description": "Intrusion policy to retrieve",
+                    "data_type": "string",
+                    "order": 0
+                },
+                "domain_name": {
+                    "description": "Firepower Domain. If none is specified the default domain will be queried",
+                    "data_type": "string",
+                    "order": 1
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.parameter.domain_name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.name",
+                    "data_type": "string",
+                    "example_values": [
+                        "new-policy"
+                    ],
+                    "column_name": "Policy Name",
+                    "column_order": 0
+                },
+                {
+                    "data_path": "action_result.data.*.policy_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "00000000-0000-0ed3-0000-012884902138"
+                    ],
+                    "column_name": "Policy Id",
+                    "column_order": 1
+                }
+            ],
+            "render": {
+                "title": "Intrusion Policies",
+                "type": "table"
+            },
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "create intrusion policy",
+            "description": "Create an intrusion policy",
+            "type": "generic",
+            "read_only": false,
+            "identifier": "create_intrusion_policy",
+            "parameters": {
+                "name": {
+                    "description": "Name of the intrusion policy",
+                    "data_type": "string",
+                    "required": true,
+                    "order": 0
+                },
+                "description": {
+                    "description": "Description of the intrusion policy",
+                    "data_type": "string",
+                    "order": 1
+                },
+                "base_policy": {
+                    "description": "Base intrusion policy ID. Can be found using list intrusion policies",
+                    "data_type": "string",
+                    "required": true, 
+                    "order": 2
+                },
+                "inspection_mode": {
+                    "description": "The inspection mode for the Snort 3 engine",
+                    "data_type": "string",
+                    "value_list": [
+                       "DETECTION",
+                       "PREVENTION"
+                    ],
+                    "order": 3
+                },
+                "domain_name": {
+                    "description": "Firepower Domain. If none is specified the default domain will be queried",
+                    "data_type": "string",
+                    "order": 4
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.parameter.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.description",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.base_policy",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.inspection_mode",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.domain_name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.id",
+                    "data_type": "string",
+                    "column_order": 0,
+                    "column_name": "Policy Id"
+                },
+                {
+                    "data_path": "action_result.data.*.name",
+                    "data_type": "string",
+                    "example_values": [
+                        "new-policy"
+                    ],
+                    "column_name": "Policy Name",
+                    "column_order": 1
+                },
+                {
+                    "data_path": "action_result.data.*.type",
+                    "data_type": "string",
+                    "example_values": [
+                        "intrusionpolicy"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.basePolicy.id",
+                    "data_type": "string",
+                    "column_name": "Base Policy Id",
+                    "column_order": 3
+                },
+                {
+                    "data_path": "action_result.data.*.basePolicy.name",
+                    "data_type": "string",
+                    "example_values": [
+                        "Balanced Security and Connectivity"
+                    ],
+                    "column_name": "Base Policy Name",
+                    "column_order": 4
+                },
+                {
+                    "data_path": "action_result.data.*.basePolicy.type",
+                    "data_type": "string",
+                    "example_values": [
+                        "intrusionpolicy"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.basePolicy.inspectionMode",
+                    "data_type": "string",
+                    "example_values": [
+                        "DETECTION"
+                    ],
+                    "column_name": "Base Policy Inspection Mode",
+                    "column_order": 5
+                },
+                {
+                    "data_path": "action_result.data.*.basePolicy.isSystemDefined",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.description",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.inspectionMode",
+                    "data_type": "string",
+                    "example_values": [
+                        "DETECTION"
+                    ],
+                    "column_name": "Policy Inspection Mode",
+                    "column_order": 2
+                }
+            ],
+            "render": {
+                "title": "Create Intrusion Policy",
+                "type": "table"
+            },
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "update intrusion policy",
+            "description": "Update an intrusion policy",
+            "type": "generic",
+            "read_only": false,
+            "identifier": "update_intrusion_policy",
+            "parameters": {
+                "policy_id": {
+                    "description": "Id of the intrusion policy to update",
+                    "data_type": "string",
+                    "required": true,
+                    "order": 0
+                },
+                "name": {
+                    "description": "Name of the policy",
+                    "data_type": "string",
+                    "order": 1
+                },
+                "description": {
+                    "description": "Description of the policy",
+                    "data_type": "string",
+                    "order": 2
+                },
+                "base_policy": {
+                    "description": "Base intrusion policy ID. Can be found using list intrusion policies",
+                    "data_type": "string",
+                    "order": 3
+                },
+                "inspection_mode": {
+                    "description": "The inspection mode for the Snort 3 engine",
+                    "data_type": "string",
+                    "value_list": [
+                       "DETECTION",
+                       "PREVENTION"
+                    ],
+                    "order": 4
+                },
+                "replicate_inspection_mode": {
+                    "description": "Whether to replicate inspection_mode from Snort 3 to Snort ",
+                    "data_type": "boolean",
+                    "order": 5
+                },
+                "domain_name": {
+                    "description": "Firepower Domain. If none is specified the default domain will be queried",
+                    "data_type": "string",
+                    "order": 6
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.parameter.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.description",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.base_policy",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.inspection_mode",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.domain_name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.id",
+                    "data_type": "string",
+                    "column_order": 0,
+                    "column_name": "Policy Id"
+                },
+                {
+                    "data_path": "action_result.data.*.name",
+                    "data_type": "string",
+                    "example_values": [
+                        "new-policy"
+                    ],
+                    "column_name": "Policy Name",
+                    "column_order": 1
+                },
+                {
+                    "data_path": "action_result.data.*.type",
+                    "data_type": "string",
+                    "example_values": [
+                        "intrusionpolicy"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.basePolicy.id",
+                    "data_type": "string",
+                    "column_name": "Base Policy Id",
+                    "column_order": 3
+                },
+                {
+                    "data_path": "action_result.data.*.basePolicy.name",
+                    "data_type": "string",
+                    "example_values": [
+                        "Balanced Security and Connectivity"
+                    ],
+                    "column_name": "Base Policy Name",
+                    "column_order": 4
+                },
+                {
+                    "data_path": "action_result.data.*.basePolicy.type",
+                    "data_type": "string",
+                    "example_values": [
+                        "intrusionpolicy"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.basePolicy.inspectionMode",
+                    "data_type": "string",
+                    "example_values": [
+                        "DETECTION"
+                    ],
+                    "column_name": "Base Policy Inspection Mode",
+                    "column_order": 5
+                },
+                {
+                    "data_path": "action_result.data.*.basePolicy.isSystemDefined",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.description",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.inspectionMode",
+                    "data_type": "string",
+                    "example_values": [
+                        "DETECTION"
+                    ],
+                    "column_name": "Policy Inspection Mode",
+                    "column_order": 2
+                }
+            ],
+            "render": {
+                "title": "Update Intrusion Policy",
+                "type": "table"
+            },
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "delete intrusion policies",
+            "description": "Deleted the specified access intrusion policy",
+            "type": "generic",
+            "identifier": "delete_intrusion_policy",
+            "read_only": false,
+            "parameters": {
+                "policy_id": {
+                    "description": "Id of the policy to delete",
+                    "data_type": "string",
+                    "required": true,
+                    "order": 0
+                },
+                "domain_name": {
+                    "description": "Firepower Domain. If none is specified the default domain will be queried",
+                    "data_type": "string",
+                    "order": 1
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.parameter.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.description",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.base_policy",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.inspection_mode",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.domain_name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.id",
+                    "data_type": "string",
+                    "column_order": 0,
+                    "column_name": "Policy Id"
+                },
+                {
+                    "data_path": "action_result.data.*.name",
+                    "data_type": "string",
+                    "example_values": [
+                        "new-policy"
+                    ],
+                    "column_name": "Policy Name",
+                    "column_order": 1
+                },
+                {
+                    "data_path": "action_result.data.*.type",
+                    "data_type": "string",
+                    "example_values": [
+                        "intrusionpolicy"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.basePolicy.id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.basePolicy.name",
+                    "data_type": "string",
+                    "example_values": [
+                        "Balanced Security and Connectivity"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.basePolicy.type",
+                    "data_type": "string",
+                    "example_values": [
+                        "intrusionpolicy"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.basePolicy.inspectionMode",
+                    "data_type": "string",
+                    "example_values": [
+                        "DETECTION"
+                    ],
+                    "column_name": "Inspection Mode",
+                    "column_order": 2
+                },
+                {
+                    "data_path": "action_result.data.*.basePolicy.isSystemDefined",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.description",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.inspectionMode",
+                    "data_type": "string",
+                    "example_values": [
+                        "DETECTION"
+                    ]
+                }
+            ],
+            "render": {
+                "title": "Delete Intrsuin Policy",
                 "type": "table"
             },
             "versions": "EQ(*)"

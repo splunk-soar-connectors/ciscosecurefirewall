@@ -23,7 +23,34 @@ from bs4 import BeautifulSoup
 from phantom.action_result import ActionResult
 from phantom.base_connector import BaseConnector
 
-from ciscosecurefirewall_consts import *
+from ciscosecurefirewall_consts import (
+    ACCESS_POLICY_ENDPOINT,
+    ACCESS_POLICY_ID_ENDPOINT,
+    ACCESS_RULES_ENDPOINT,
+    ACCESS_RULES_ID_ENDPOINT,
+    CLOUD_HOST,
+    DEFAULT_REQUEST_TIMEOUT,
+    DEPLOY_DEVICES_ENDPOINT,
+    DEPLOYMENT_STATUS_ENDPOINT,
+    DEVICES_ENDPOINT,
+    ENCRYPTION_ERR,
+    GET_DEPLOYABLE_DEVICES_ENDPOINT,
+    GET_HOSTS_ENDPOINT,
+    HEADERS,
+    INTRUSION_POLICY_ENDPOINT,
+    INTRUSION_POLICY_ID_ENDPOINT,
+    NETWORK_GROUPS_ENDPOINT,
+    NETWORK_GROUPS_ID_ENDPOINT,
+    NETWORK_OBJECT_ID_ENDPOINT,
+    NETWORK_OBJECTS_ENDPOINT,
+    OBJECT_TYPES,
+    REFRESH_COUNT,
+    REFRESH_ENDPOINT,
+    REFRESH_TOKEN_KEY,
+    STATE_FILE_CORRUPT_ERR,
+    TOKEN_ENDPOINT,
+    TOKEN_KEY,
+)
 
 
 class RetVal(tuple):
@@ -101,7 +128,6 @@ class FP_Connector(BaseConnector):
             self.refresh_token = self._state.get(REFRESH_COUNT, 0)
 
             ret_val = self._get_token(action_result)
-            self.debug_print(f"the state file is {self._state}")
 
         if phantom.is_fail(ret_val):
             return self.get_status()
@@ -138,7 +164,7 @@ class FP_Connector(BaseConnector):
         self._state[TOKEN_KEY] = self.token
         self._state[REFRESH_TOKEN_KEY] = self.refresh_token
         self._state[REFRESH_COUNT] = self.refresh_count
-        self._state[DOMAINS] = self.domains
+        self._state["domains"] = self.domains
         self.save_state(self._state)
 
     def authenicate_cloud_fmc(self, config):
@@ -281,12 +307,12 @@ class FP_Connector(BaseConnector):
 
         return RetVal(action_result.set_status(phantom.APP_ERROR, msg), None)
 
-    def _make_rest_call(self, method, resource, action_result, json_body=None, headers_only=False, first_try=True, params=None, auth=None):
+    def _make_rest_call(self, method, endpoint, action_result, json_body=None, headers_only=False, first_try=True, params=None, auth=None):
         """
         This method makes a REST call to the API
         """
         request_method = getattr(requests, method)
-        url = "https://{0}{1}".format(self.firepower_host, resource)
+        url = "https://{0}{1}".format(self.firepower_host, endpoint)
         if json_body:
             self.headers.update({"Content-type": "application/json"})
 
@@ -305,8 +331,8 @@ class FP_Connector(BaseConnector):
                     if phantom.is_fail(ret_val):
                         return action_result.get_status(), None
 
-                self.debug_print(f"Running url that failed because of token error {resource}")
-                return self._make_rest_call(method, resource, action_result, json_body, headers_only, first_try=False)
+                self.debug_print(f"Re-running endpoint that failed because of token error {endpoint}")
+                return self._make_rest_call(method, endpoint, action_result, json_body, headers_only, first_try=False)
 
             message = "Error from server. Status Code: {0} Data from server: {1}".format(
                 result.status_code, result.text.replace("{", "{{").replace("}", "}}")
@@ -477,6 +503,32 @@ class FP_Connector(BaseConnector):
             if domain_name.lower() == leaf_domain:
                 return domain["uuid"]
 
+    def list_objects(self, url: str, action_result: ActionResult, expanded: bool = False) -> Tuple[bool, list]:
+        objects = []
+        offset = 0
+        limit = 50
+        params = {"limit": limit, "expanded": str(expanded).lower()}
+        while True:
+            params["offset"] = offset
+            ret_val, response = self._make_rest_call("get", url, action_result, params=params)
+            if phantom.is_fail(ret_val):
+                return action_result.get_status(), []
+
+            try:
+                objects.extend(response.get("items", []))
+
+            except Exception as e:
+                message = "An error occurred while processing network groups"
+                self.debug_print(f"{message}. {str(e)}")
+                return action_result.set_status(phantom.APP_ERROR, message), []
+
+            if "paging" in response and "next" in response["paging"]:
+                offset += limit
+            else:
+                break
+
+        return phantom.APP_SUCCESS, objects
+
     def _handle_get_network_groups(self, param: Dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
@@ -487,31 +539,13 @@ class FP_Connector(BaseConnector):
         domain_uuid = self.get_domain_id(param.get("domain_name"))
 
         url = NETWORK_GROUPS_ENDPOINT.format(domain_id=domain_uuid)
+        ret_val, network_group_list = self.list_objects(url, action_result, True)
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
 
-        offset = 0
-        limit = 50
-        params = {"limit": limit, "expanded": True}
-        while True:
-            params["offset"] = offset
-            ret_val, response = self._make_rest_call("get", url, action_result, params=params)
-            if phantom.is_fail(ret_val):
-                return action_result.get_status()
-
-            try:
-                network_group_list = response.get("items", [])
-                for item in network_group_list:
-                    if not group_name or group_name == item["name"]:
-                        action_result.add_data({"name": item["name"], "uuid": item["id"]})
-
-            except Exception as e:
-                message = "An error occurred while processing network groups"
-                self.debug_print(f"{message}. {str(e)}")
-                return self.set_status(phantom.APP_ERROR, message)
-
-            if "paging" in response and "next" in response["paging"]:
-                offset += limit
-            else:
-                break
+        for item in network_group_list:
+            if not group_name or group_name == item["name"]:
+                action_result.add_data({"name": item["name"], "uuid": item["id"]})
 
         action_result.update_summary({"total_groups_returned": len(action_result.get_data())})
 
@@ -604,32 +638,23 @@ class FP_Connector(BaseConnector):
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
+        policy_id = param.get("policy_id")
         domain_uuid = self.get_domain_id(param.get("domain_name"))
         url = ACCESS_POLICY_ENDPOINT.format(domain_id=domain_uuid)
 
-        offset = 0
-        limit = 50
-        params = {"limit": limit}
-        while True:
-            params["offset"] = offset
-            ret_val, response = self._make_rest_call("get", url, action_result, params=params)
+        if policy_id:
+            ret_val, policy_data = self.get_access_policy(domain_uuid, policy_id)
             if phantom.is_fail(ret_val):
-                return action_result.get_status()
+                return self.get_status()
+            action_result.add_data(policy_data)
+            return action_result.set_status(phantom.APP_SUCCESS)
 
-            try:
-                policies = response.get("items", [])
-                for policy in policies:
-                    action_result.add_data({"name": policy["name"], "policy_id": policy["id"]})
+        ret_val, policies = self.list_objects(url, action_result)
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
 
-            except Exception as e:
-                message = "An error occurred while processing access policies"
-                self.debug_print(f"{message}. {str(e)}")
-                return self.set_status(phantom.APP_ERROR, message)
-
-            if "paging" in response and "next" in response["paging"]:
-                offset += limit
-            else:
-                break
+        for policy in policies:
+            action_result.add_data({"name": policy["name"], "policy_id": policy["id"]})
 
         action_result.update_summary({"total_policies_returned": len(action_result.get_data())})
 
@@ -675,14 +700,11 @@ class FP_Connector(BaseConnector):
         cur_action = policy_data["defaultAction"]
         payload = {
             "id": policy_data["id"],
-            "name": policy_data["name"],
+            "name": param.get("name") or policy_data["name"],
             "type": "AccessPolicy",
             "defaultAction": cur_action,
             "description": policy_data.get("description", ""),
         }
-
-        if param.get("name"):
-            payload["name"] = param["name"]
 
         if param.get("description"):
             payload["description"] = param["description"]
@@ -691,11 +713,9 @@ class FP_Connector(BaseConnector):
             payload["defaultAction"]["action"] = param["action"].upper()
 
         url = ACCESS_POLICY_ID_ENDPOINT.format(domain_id=domain_uuid, policy_id=policy_id)
-        print(f"payload is {payload}")
         ret_val, response = self._make_rest_call("put", url, action_result, json_body=payload)
         if phantom.is_fail(ret_val):
             return action_result.get_status()
-        print(f"updated policy with {response}")
         action_result.add_data(response)
         summary = action_result.update_summary({})
         summary["Message"] = f"Successfully updated access policy with id {policy_id}"
@@ -739,29 +759,12 @@ class FP_Connector(BaseConnector):
 
         url = ACCESS_RULES_ENDPOINT.format(domain_id=domain_uuid, policy_id=policy_id)
 
-        offset = 0
-        limit = 50
-        params = {"limit": limit}
-        while True:
-            params["offset"] = offset
-            ret_val, response = self._make_rest_call("get", url, action_result, params=params)
-            if phantom.is_fail(ret_val):
-                return action_result.get_status()
+        ret_val, rules = self.list_objects(url, action_result)
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
 
-            try:
-                rules = response.get("items", [])
-                for rule in rules:
-                    action_result.add_data({"name": rule["name"], "rule_id": rule["id"]})
-
-            except Exception as e:
-                message = "An error occurred while processing access rules"
-                self.debug_print(f"{message}. {str(e)}")
-                return self.set_status(phantom.APP_ERROR, message)
-
-            if "paging" in response and "next" in response["paging"]:
-                offset += limit
-            else:
-                break
+        for rule in rules:
+            action_result.add_data({"name": rule["name"], "rule_id": rule["id"]})
 
         action_result.update_summary({"total_rules_returned": len(action_result.get_data())})
 
@@ -776,7 +779,6 @@ class FP_Connector(BaseConnector):
                 continue
             ret_val, _ = self.get_network_group(dommain_uuid, object_id)
             if phantom.is_fail(ret_val):
-                self.debug_print(f"Id {object_id} is not a network object or network group")
                 return self.get_status(), None
             networks_objects.append({"type": "NetworkGroup", "id": object_id})
 
@@ -843,20 +845,11 @@ class FP_Connector(BaseConnector):
 
         rule_payload = {
             "id": rule_data["id"],
-            "name": rule_data["name"],
-            "action": rule_data["action"],
+            "name": param.get("name") or rule_data["name"],
+            "action": param.get("action") or rule_data["action"],
             "type": rule_data["type"],
-            "enabled": rule_data["enabled"],
+            "enabled": param.get("enabled") or rule_data["enabled"],
         }
-
-        if param.get("name"):
-            rule_payload["name"] = param["name"]
-
-        if param.get("action"):
-            rule_payload["action"] = param["action"]
-
-        if param.get("enabled"):
-            rule_payload["enabled"] = param["enabled"]
 
         current_source_networks = rule_data.get("destinationNetworks", {}).get("objects", [])
         source_networks = param.get("source_networks_to_add", "")
@@ -926,61 +919,28 @@ class FP_Connector(BaseConnector):
 
         url = DEVICES_ENDPOINT.format(domain_id=domain_uuid)
 
-        offset = 0
-        limit = 50
-        params = {"limit": limit}
-        while True:
-            params["offset"] = offset
-            ret_val, response = self._make_rest_call("get", url, action_result, params=params)
-            if phantom.is_fail(ret_val):
-                return action_result.get_status()
+        ret_val, devices = self.list_objects(url, action_result)
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
 
-            try:
-                devices = response.get("items", [])
-                for device in devices:
-                    action_result.add_data(device)
-
-            except Exception as e:
-                message = "An error occurred while getting devices"
-                self.debug_print(f"{message}. {str(e)}")
-                return action_result.set_status(phantom.APP_ERROR, message)
-
-            if "paging" in response and "next" in response["paging"]:
-                offset += limit
-            else:
-                break
+        for device in devices:
+            action_result.add_data(device)
 
         action_result.update_summary({"total_deices_returned": len(action_result.get_data())})
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def get_deployable_devices(self, domain_id: str) -> Tuple[bool, Any]:
-        url = GET_DEPLOYABLE_DEVICES_ENDPOINT.format(domain_id=domain_id, isExpand=True)
-        deployable_devices = []
-        offset = 0
-        limit = 50
-        params = {"limit": limit, "expanded": True}
-        while True:
-            params["offset"] = offset
-            ret_val, response = self._make_rest_call("get", url, self, params=params)
-            if phantom.is_fail(ret_val):
-                return phantom.APP_ERROR, []
+    def get_deployable_devices(self, domain_id: str, action_result) -> Tuple[bool, Any]:
+        url = GET_DEPLOYABLE_DEVICES_ENDPOINT.format(domain_id=domain_id)
+        device_lst = []
+        ret_val, deployable_devices = self.list_objects(url, action_result, True)
+        if phantom.is_fail(ret_val):
+            return action_result.get_status(), device_lst
 
-            try:
-                devices = response.get("items", [])
-                for item in devices:
-                    deployable_devices.append({"name": item["device"]["name"], "id": item["device"]["id"], "type": item["device"]["type"]})
-            except Exception as e:
-                message = "An error occurred while processing access rules"
-                self.debug_print(f"{message}. {str(e)}")
-                return phantom.APP_ERROR, []
+        for device in deployable_devices:
+            device_lst.append({"name": device["device"]["name"], "id": device["device"]["id"], "type": device["device"]["type"]})
 
-            if "paging" in response and "next" in response["paging"]:
-                offset += limit
-            else:
-                break
-
-        return phantom.APP_SUCCESS, deployable_devices
+        return phantom.APP_SUCCESS, device_lst
 
     def _handle_get_deployable_devices(self, param: Dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
@@ -988,7 +948,7 @@ class FP_Connector(BaseConnector):
         action_result = self.add_action_result(ActionResult(dict(param)))
         domain_uuid = self.get_domain_id(param.get("domain_name"))
 
-        ret_val, devices = self.get_deployable_devices(domain_uuid)
+        ret_val, devices = self.get_deployable_devices(domain_uuid, action_result)
 
         if phantom.is_fail(ret_val):
             return action_result.set_status(phantom.APP_ERROR, "Unable to get deployable devices")
@@ -1008,7 +968,7 @@ class FP_Connector(BaseConnector):
 
         devices_to_deploy = [device.strip() for device in param.get("devices", "").split(",") if device.strip()]
         if not devices_to_deploy:
-            ret_val, devices = self.get_deployable_devices(domain_uuid)
+            ret_val, devices = self.get_deployable_devices(domain_uuid, action_result)
             if phantom.is_fail(ret_val):
                 return action_result.set_status(phantom.APP_ERROR, "Unable to get deployable devices")
             for device in devices:
@@ -1048,6 +1008,107 @@ class FP_Connector(BaseConnector):
         action_result.add_data(response)
         summary = action_result.update_summary({})
         summary["Message"] = f"Successfully retrieved status for deployment {deployment_id}"
+        return action_result.set_status(phantom.APP_SUCCESS)
+
+    def get_intrusion_policy(self, domain_uuid, policy_id):
+        url = INTRUSION_POLICY_ID_ENDPOINT.format(domain_id=domain_uuid, policy_id=policy_id)
+        ret_val, response = self._make_rest_call("get", url, self)
+        return ret_val, response
+
+    def _handle_list_intrusion_policies(self, param: Dict[str, Any]) -> bool:
+        self.save_progress(f"In action handler for: {self.get_action_identifier()}")
+
+        action_result = self.add_action_result(ActionResult(dict(param)))
+        domain_uuid = self.get_domain_id(param.get("domain_name"))
+        policy_id = param.get("policy_id")
+        if policy_id:
+            ret_val, policy_data = self.get_intrusion_policy(domain_uuid, policy_id)
+            if phantom.is_fail(ret_val):
+                return ret_val
+            action_result.add_data(policy_data)
+            return action_result.set_status(phantom.APP_SUCCESS)
+
+        url = INTRUSION_POLICY_ENDPOINT.format(domain_id=domain_uuid)
+
+        ret_val, policies = self.list_objects(url, action_result)
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
+
+        for policy in policies:
+            action_result.add_data({"name": policy["name"], "policy_id": policy["id"]})
+
+        action_result.update_summary({"total_policies_returned": len(action_result.get_data())})
+
+        return action_result.set_status(phantom.APP_SUCCESS)
+
+    def _handle_create_intrusion_policy(self, param: Dict[str, Any]) -> bool:
+        self.save_progress(f"In action handler for: {self.get_action_identifier()}")
+        action_result = self.add_action_result(ActionResult(dict(param)))
+        name = param["name"]
+        base_policy = param["base_policy"]
+        domain_uuid = self.get_domain_id(param.get("domain_name"))
+
+        payload = {"name": name, "basePolicy": {"id": base_policy, "type": "IntrusionPolicy"}, "type": "IntrusionPolicy"}
+        description = param.get("description")
+        if description:
+            payload["description"] = description
+        inspection_mode = param.get("inspection_mode")
+        if inspection_mode:
+            payload["inspectionMode"] = inspection_mode
+
+        url = INTRUSION_POLICY_ENDPOINT.format(domain_id=domain_uuid)
+        ret_val, response = self._make_rest_call("post", url, action_result, json_body=payload)
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
+
+        action_result.add_data(response)
+        summary = action_result.update_summary({})
+        summary["Message"] = f"Successfully added intrusion policy with name {name}"
+        return action_result.set_status(phantom.APP_SUCCESS)
+
+    def _handle_update_intrusion_policy(self, param: Dict[str, Any]) -> bool:
+        self.save_progress(f"In action handler for: {self.get_action_identifier()}")
+        action_result = self.add_action_result(ActionResult(dict(param)))
+
+        policy_id = param["policy_id"]
+        domain_uuid = self.get_domain_id(param.get("domain_name"))
+        ret_val, policy_data = self.get_intrusion_policy(domain_uuid, policy_id)
+        if phantom.is_fail(ret_val):
+            return ret_val
+
+        payload = {
+            "id": policy_id,
+            "name": param.get("name") or policy_data["name"],
+            "description": param.get("description", "") or policy_data.get("description", ""),
+            "inspectionMode": param.get("inspection_mode") or policy_data["inspectionMode"],
+            "basePolicy": {"id": param.get("base_policy") or policy_data["basePolicy"]["id"]},
+            "replicate_inspection_mode": param.get("replicate_inspection_mode", False)
+        }
+        url = INTRUSION_POLICY_ID_ENDPOINT.format(domain_id=domain_uuid, policy_id=policy_id)
+        ret_val, response = self._make_rest_call("put", url, action_result, json_body=payload)
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
+
+        action_result.add_data(response)
+        summary = action_result.update_summary({})
+        summary["Message"] = f"Successfully updated intrusion policy with id {policy_id}"
+        return action_result.set_status(phantom.APP_SUCCESS)
+
+    def _handle_delete_intrusion_policy(self, param: Dict[str, Any]) -> bool:
+        self.save_progress(f"In action handler for: {self.get_action_identifier()}")
+        action_result = self.add_action_result(ActionResult(dict(param)))
+
+        policy_id = param["policy_id"]
+        domain_uuid = self.get_domain_id(param.get("domain_name"))
+
+        url = INTRUSION_POLICY_ID_ENDPOINT.format(domain_id=domain_uuid, policy_id=policy_id)
+        ret_val, response = self._make_rest_call("delete", url, action_result)
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
+
+        action_result.add_data(response)
+        summary = action_result.update_summary({})
+        summary["Message"] = f"Successfully delete intrusion policy with id {policy_id}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
     def handle_action(self, param):
@@ -1101,6 +1162,14 @@ class FP_Connector(BaseConnector):
             ret_val = self._handle_deploy_devices(param)
         elif action_id == "get_deployment_status":
             ret_val = self._handle_get_deployment_status(param)
+        elif action_id == "list_intrusion_policies":
+            ret_val = self._handle_list_intrusion_policies(param)
+        elif action_id == "create_intrusion_policy":
+            ret_val = self._handle_create_intrusion_policy(param)
+        elif action_id == "update_intrusion_policy":
+            ret_val = self._handle_update_intrusion_policy(param)
+        elif action_id == "delete_intrusion_policy":
+            ret_val = self._handle_delete_intrusion_policy(param)
 
         return ret_val
 
