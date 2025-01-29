@@ -20,6 +20,8 @@ import phantom.app as phantom
 import requests
 import simplejson as json
 from bs4 import BeautifulSoup
+from requests.auth import HTTPBasicAuth
+from requests.models import Response
 from phantom.action_result import ActionResult
 from phantom.base_connector import BaseConnector
 
@@ -75,7 +77,7 @@ class FP_Connector(BaseConnector):
         self.default_firepower_domain = None
         self.refresh_count = 0
 
-    def _reset_state_file(self):
+    def _reset_state_file(self) -> None:
         """
         This method resets the state file.
         """
@@ -83,7 +85,7 @@ class FP_Connector(BaseConnector):
         self._state = {"app_version": self.get_app_json().get("app_version")}
         self.save_state(self._state)
 
-    def initialize(self):
+    def initialize(self) -> bool:
         """
         Initializes the global variables and validates them.
 
@@ -134,7 +136,7 @@ class FP_Connector(BaseConnector):
 
         return phantom.APP_SUCCESS
 
-    def finalize(self):
+    def finalize(self) -> bool:
         """
         Performs some final operations or clean up operations.
 
@@ -157,7 +159,7 @@ class FP_Connector(BaseConnector):
         self.save_state(self._state)
         return phantom.APP_SUCCESS
 
-    def _update_state(self):
+    def _update_state(self) -> None:
         """
         This method updates the state with the new values.
         """
@@ -167,7 +169,7 @@ class FP_Connector(BaseConnector):
         self._state["domains"] = self.domains
         self.save_state(self._state)
 
-    def authenicate_cloud_fmc(self, config):
+    def authenicate_cloud_fmc(self, config: Dict[str, Any]) -> bool:
         """
         This method updates the headers and sets the firepower host
         based on the users region.
@@ -178,7 +180,7 @@ class FP_Connector(BaseConnector):
         self.headers.update({"Authorization": f"Bearer {api_key}"})
         return phantom.APP_SUCCESS
 
-    def _get_token(self, action_result):
+    def _get_token(self, action_result: ActionResult) -> bool:
         """
         This method returns the cached or a new token based
         on the values present in the state file.
@@ -205,7 +207,7 @@ class FP_Connector(BaseConnector):
         # Generate a new token
         self.debug_print("Fetching a new token")
         self.headers.pop(REFRESH_TOKEN_KEY, None)
-        auth = requests.auth.HTTPBasicAuth(self.username, self.password)
+        auth = HTTPBasicAuth(self.username, self.password)
         ret_val, headers = self._make_rest_call("post", TOKEN_ENDPOINT, action_result, headers_only=True, first_try=True, auth=auth)
         if phantom.is_fail(ret_val):
             self.debug_print(f"Error {ret_val} while generating token with response {headers}")
@@ -226,7 +228,7 @@ class FP_Connector(BaseConnector):
 
         return phantom.APP_SUCCESS
 
-    def _process_empty_response(self, response, action_result):
+    def _process_empty_response(self, response, action_result) -> RetVal:
         if response.status_code == 200:
             return RetVal(phantom.APP_SUCCESS, {})
 
@@ -235,7 +237,7 @@ class FP_Connector(BaseConnector):
             None,
         )
 
-    def _process_html_response(self, response, action_result):
+    def _process_html_response(self, response, action_result) -> RetVal:
         # An html response, treat it like an error
         status_code = response.status_code
 
@@ -253,7 +255,7 @@ class FP_Connector(BaseConnector):
         message = message.replace("{", "{{").replace("}", "}}")
         return RetVal(action_result.set_status(phantom.APP_ERROR, message), None)
 
-    def _process_json_response(self, r, action_result):
+    def _process_json_response(self, r: Response, action_result: ActionResult) -> RetVal:
         # Try a json parse
         try:
             resp_json = r.json()
@@ -275,7 +277,7 @@ class FP_Connector(BaseConnector):
 
         return RetVal(action_result.set_status(phantom.APP_ERROR, message), None)
 
-    def _process_response(self, r, action_result):
+    def _process_response(self, r: Response, action_result: ActionResult) -> RetVal:
 
         # store the r_text in debug data, it will get dumped in the logs if the action fails
         if hasattr(action_result, "add_debug_data"):
@@ -307,7 +309,17 @@ class FP_Connector(BaseConnector):
 
         return RetVal(action_result.set_status(phantom.APP_ERROR, msg), None)
 
-    def _make_rest_call(self, method, endpoint, action_result, json_body=None, headers_only=False, first_try=True, params=None, auth=None):
+    def _make_rest_call(
+        self,
+        method: str,
+        endpoint: str,
+        action_result: ActionResult,
+        json_body: Dict[str, Any] = None,
+        headers_only: bool = False,
+        first_try: bool = True,
+        params: Dict[str, Any] = None,
+        auth: HTTPBasicAuth = None
+    ) -> Tuple[bool, Any]:
         """
         This method makes a REST call to the API
         """
@@ -344,7 +356,7 @@ class FP_Connector(BaseConnector):
 
         return self._process_response(result, action_result)
 
-    def is_cloud_deployment(self):
+    def is_cloud_deployment(self) -> bool:
         return self.fmc_type == "Cloud"
 
     def _handle_test_connectivity(self, param: Dict[str, Any]) -> bool:
@@ -367,7 +379,7 @@ class FP_Connector(BaseConnector):
         self.save_progress("Connectivity test passed")
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def get_network_objects_of_type(self, object_type, domain_uuid, action_result, name=None):
+    def get_network_objects_of_type(self, object_type: str, domain_uuid: str, action_result: ActionResult, name: str = None) -> bool:
         url = NETWORK_OBJECTS_ENDPOINT.format(domain_id=domain_uuid, type=object_type.lower() + "s")
 
         offset = 0
@@ -499,7 +511,7 @@ class FP_Connector(BaseConnector):
             return "default"
 
         for domain in self.domains:
-            leaf_domain = domain["name"].lower().split('/')[-1]
+            leaf_domain = domain["name"].lower().split("/")[-1]
             if domain_name.lower() == leaf_domain:
                 return domain["uuid"]
 
@@ -616,7 +628,7 @@ class FP_Connector(BaseConnector):
         summary["Message"] = f"Successfully update network group with id {group_id}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _handle_delete_network_group(self, param):
+    def _handle_delete_network_group(self, param: Dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -634,7 +646,7 @@ class FP_Connector(BaseConnector):
         summary["Message"] = f"Successfully deleted network group with id {group_id}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _handle_get_access_policies(self, param):
+    def _handle_get_access_policies(self, param: Dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -686,7 +698,7 @@ class FP_Connector(BaseConnector):
         ret_val, response = self._make_rest_call("get", url, self)
         return ret_val, response
 
-    def _handle_update_access_policy(self, param):
+    def _handle_update_access_policy(self, param: Dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -1010,7 +1022,7 @@ class FP_Connector(BaseConnector):
         summary["Message"] = f"Successfully retrieved status for deployment {deployment_id}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def get_intrusion_policy(self, domain_uuid, policy_id):
+    def get_intrusion_policy(self, domain_uuid: str, policy_id: str) -> Tuple[int, any]:
         url = INTRUSION_POLICY_ID_ENDPOINT.format(domain_id=domain_uuid, policy_id=policy_id)
         ret_val, response = self._make_rest_call("get", url, self)
         return ret_val, response
@@ -1082,7 +1094,7 @@ class FP_Connector(BaseConnector):
             "description": param.get("description", "") or policy_data.get("description", ""),
             "inspectionMode": param.get("inspection_mode") or policy_data["inspectionMode"],
             "basePolicy": {"id": param.get("base_policy") or policy_data["basePolicy"]["id"]},
-            "replicate_inspection_mode": param.get("replicate_inspection_mode", False)
+            "replicate_inspection_mode": param.get("replicate_inspection_mode", False),
         }
         url = INTRUSION_POLICY_ID_ENDPOINT.format(domain_id=domain_uuid, policy_id=policy_id)
         ret_val, response = self._make_rest_call("put", url, action_result, json_body=payload)
@@ -1111,7 +1123,7 @@ class FP_Connector(BaseConnector):
         summary["Message"] = f"Successfully delete intrusion policy with id {policy_id}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def handle_action(self, param):
+    def handle_action(self, param: Dict[str, Any]) -> bool:
 
         ret_val = phantom.APP_SUCCESS
 

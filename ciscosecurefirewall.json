@@ -1217,8 +1217,9 @@
                     "data_type": "string",
                     "required": true,
                     "value_list": [
-                       "ALLOW",
-                       "TRUST"
+                       "BLOCK",
+                       "TRUST",
+                       "NETWORK_DISCOVERY"
                     ],
                     "order": 2
                 },
@@ -1343,10 +1344,9 @@
                     "description": "Type of action to take on matching traffic",
                     "data_type": "string",
                     "value_list": [
-                       "ALLOW",
-                       "BLOCK",
-                       "TRUST",
-                       "MONITOR"
+                        "BLOCK",
+                        "TRUST",
+                        "NETWORK_DISCOVERY"
                     ],
                     "order": 3
                 },
@@ -1558,9 +1558,7 @@
                 },
                 {
                     "data_path": "action_result.data.*.description",
-                    "data_type": "string",
-                    "column_name": "Policy Description",
-                    "column_order": 2
+                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.defaultAction.id",
@@ -1580,7 +1578,7 @@
                         "BLOCK"
                     ],
                     "column_name": "Policy Action",
-                    "column_order": 3
+                    "column_order": 2
                 },
                 {
                     "data_path": "action_result.data.*.securityIntelligence.id",
@@ -2711,6 +2709,10 @@
                     "data_type": "numeric"
                 },
                 {
+                    "data_path": "action_result.parameter.policy_id",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.parameter.name",
                     "data_type": "string"
                 },
@@ -2808,7 +2810,7 @@
             "versions": "EQ(*)"
         },
         {
-            "action": "delete intrusion policies",
+            "action": "delete intrusion policy",
             "description": "Deleted the specified access intrusion policy",
             "type": "generic",
             "identifier": "delete_intrusion_policy",
@@ -2848,19 +2850,7 @@
                     "data_type": "numeric"
                 },
                 {
-                    "data_path": "action_result.parameter.name",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.parameter.description",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.parameter.base_policy",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.parameter.inspection_mode",
+                    "data_path": "action_result.parameter.policy_id",
                     "data_type": "string"
                 },
                 {
@@ -2913,7 +2903,7 @@
                     "example_values": [
                         "DETECTION"
                     ],
-                    "column_name": "Inspection Mode",
+                    "column_name": "Policy Inspection Mode",
                     "column_order": 2
                 },
                 {
