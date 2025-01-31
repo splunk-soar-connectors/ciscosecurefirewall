@@ -45,7 +45,7 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 [list intrusion policies](#action-list-intrusion-policies) - Gets all intrusion polcies in the FMC host for a particular domain \
 [create intrusion policy](#action-create-intrusion-policy) - Create an intrusion policy \
 [update intrusion policy](#action-update-intrusion-policy) - Update an intrusion policy \
-[delete intrusion policies](#action-delete-intrusion-policies) - Deleted the specified access intrusion policy \
+[delete intrusion policy](#action-delete-intrusion-policy) - Deleted the specified access intrusion policy \
 [list devices](#action-list-devices) - Lists all devices belonging to a particular domain/tenant \
 [get deployable devices](#action-get-deployable-devices) - List all devices with configuration chnges that are ready to be deployed \
 [deploy devices](#action-deploy-devices) - Deploy devices that are ready to deploy \
@@ -824,6 +824,7 @@ action_result.status | string | | success failed |
 action_result.message | string | | |
 summary.total_objects | numeric | | |
 summary.total_objects_successful | numeric | | |
+action_result.parameter.policy_id | string | | |
 action_result.parameter.name | string | | |
 action_result.parameter.description | string | | |
 action_result.parameter.base_policy | string | | |
@@ -840,7 +841,7 @@ action_result.data.\*.basePolicy.isSystemDefined | boolean | | |
 action_result.data.\*.description | string | | |
 action_result.data.\*.inspectionMode | string | | DETECTION |
 
-## action: 'delete intrusion policies'
+## action: 'delete intrusion policy'
 
 Deleted the specified access intrusion policy
 
@@ -862,10 +863,7 @@ action_result.status | string | | success failed |
 action_result.message | string | | |
 summary.total_objects | numeric | | |
 summary.total_objects_successful | numeric | | |
-action_result.parameter.name | string | | |
-action_result.parameter.description | string | | |
-action_result.parameter.base_policy | string | | |
-action_result.parameter.inspection_mode | string | | |
+action_result.parameter.policy_id | string | | |
 action_result.parameter.domain_name | string | | |
 action_result.data.\*.id | string | | |
 action_result.data.\*.name | string | | new-policy |
