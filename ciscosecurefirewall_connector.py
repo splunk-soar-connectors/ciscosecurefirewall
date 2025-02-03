@@ -20,10 +20,10 @@ import phantom.app as phantom
 import requests
 import simplejson as json
 from bs4 import BeautifulSoup
-from requests.auth import HTTPBasicAuth
-from requests.models import Response
 from phantom.action_result import ActionResult
 from phantom.base_connector import BaseConnector
+from requests.auth import HTTPBasicAuth
+from requests.models import Response
 
 from ciscosecurefirewall_consts import (
     ACCESS_POLICY_ENDPOINT,
@@ -172,7 +172,7 @@ class FP_Connector(BaseConnector):
     def authenicate_cloud_fmc(self, config: Dict[str, Any]) -> bool:
         """
         This method updates the headers and sets the firepower host
-        based on the users region.
+        based on the users region when connecting to a cloud FMC.
         """
         region = config["region"]
         api_key = config["api_key"]
@@ -268,7 +268,6 @@ class FP_Connector(BaseConnector):
                 None,
             )
 
-        # Please specify the status codes here
         if 200 <= r.status_code < 399:
             return RetVal(phantom.APP_SUCCESS, resp_json)
 
@@ -318,10 +317,20 @@ class FP_Connector(BaseConnector):
         headers_only: bool = False,
         first_try: bool = True,
         params: Dict[str, Any] = None,
-        auth: HTTPBasicAuth = None
+        auth: HTTPBasicAuth = None,
     ) -> Tuple[bool, Any]:
-        """
-        This method makes a REST call to the API
+        """Function that makes the REST call to the app.
+        :param method: REST method
+        :param endpoint: REST endpoint to be called
+        :param action_result: object of ActionResult class
+        :param json_body: JSON object
+        :param headers_only: wether to only return response headers
+        :param headers: request headers
+        :param first_try: if the request is eligible to be retried
+        :param params: request parameters
+        :param auth: basic auth if passed in. This is only needed with the generatetoken endpoint
+        :return: status phantom.APP_ERROR/phantom.APP_SUCCESS(along with appropriate message),
+        response obtained by making an API call
         """
         request_method = getattr(requests, method)
         url = "https://{0}{1}".format(self.firepower_host, endpoint)
@@ -357,14 +366,14 @@ class FP_Connector(BaseConnector):
         return self._process_response(result, action_result)
 
     def is_cloud_deployment(self) -> bool:
+        """Helper to determine if user is connecting to cloud based fmc.
+        Returns:
+            bool: If connection is to cloud basd FMC
+        """
         return self.fmc_type == "Cloud"
 
     def _handle_test_connectivity(self, param: Dict[str, Any]) -> bool:
-        """
-        Called when the user presses the test connectivity
-        button on the Phantom UI.
-        """
-        # Add an action result to the App Run
+
         action_result = ActionResult(dict(param))
         self.add_action_result(action_result)
 
@@ -380,6 +389,15 @@ class FP_Connector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS)
 
     def get_network_objects_of_type(self, object_type: str, domain_uuid: str, action_result: ActionResult, name: str = None) -> bool:
+        """Helper to get network objects of a particular type.
+        Args:
+            object_type (str): Network object type (Network, Host, Range)
+            domain_uuid (str): Domain to be queried
+            action_result (ActionResult): object of ActionResult class
+            name (str): Name of the object
+        Returns:
+            bool: If lookup was successfull
+        """
         url = NETWORK_OBJECTS_ENDPOINT.format(domain_id=domain_uuid, type=object_type.lower() + "s")
 
         offset = 0
@@ -435,7 +453,14 @@ class FP_Connector(BaseConnector):
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def get_network_object(self, domain_id: int, object_id: int) -> Tuple[bool, Dict[str, Any]]:
+    def get_network_object(self, domain_id: str, object_id: str) -> Tuple[bool, Dict[str, Any]]:
+        """Helper to get a specfic network object.
+        Args:
+            domain_uuid (str): Domain to be queried
+            object_id (str): Id of the object to retrieve
+        Returns:
+            tuple: If lookup was successfull and response object
+        """
         url = NETWORK_OBJECT_ID_ENDPOINT.format(domain_id=domain_id, type="networks", object_id=object_id)
         ret_val, response = self._make_rest_call("get", url, self)
         return ret_val, response
@@ -505,8 +530,15 @@ class FP_Connector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS)
 
     def get_domain_id(self, domain_name: str) -> str:
+        """Helper to get a domain_name id.
+        Args:
+            domain_name (str): Name of domain
+        Returns:
+            str: domain_id
+        """
         domain_name = domain_name or self.default_firepower_domain
 
+        # multitenancy on cloud achieved through seperate tenants not domains
         if not domain_name or self.is_cloud_deployment():
             return "default"
 
@@ -516,6 +548,14 @@ class FP_Connector(BaseConnector):
                 return domain["uuid"]
 
     def list_objects(self, url: str, action_result: ActionResult, expanded: bool = False) -> Tuple[bool, list]:
+        """Helper to get list any type of FMC objects (groups, policies, rules).
+        Args:
+            url (str): REST endpoint to query
+            action_result (ActionResult): object of ActionResult class
+            expanded (bool): Return detailed response of objects
+        Returns:
+            tuple: If lookup was successfull and list of objects retrieved
+        """
         objects = []
         offset = 0
         limit = 50
@@ -588,7 +628,14 @@ class FP_Connector(BaseConnector):
         summary["Message"] = f"Successfully added network group with name {group_name}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def get_network_group(self, domain_uuid, group_id):
+    def get_network_group(self, domain_uuid: str, group_id: str) -> Tuple[bool, Dict[str, Any]]:
+        """Helper to get a specfic network group.
+        Args:
+            domain_uuid (str): Domain to be queried
+            group_id (str): Id of the group to retrieve
+        Returns:
+            tuple: If lookup was successfull and response object
+        """
         url = NETWORK_GROUPS_ID_ENDPOINT.format(domain_id=domain_uuid, group_id=group_id)
         ret_val, response = self._make_rest_call("get", url, self)
         return ret_val, response
@@ -693,7 +740,14 @@ class FP_Connector(BaseConnector):
         summary["Message"] = f"Successfully created access policy with name {name}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def get_access_policy(self, domain_uuid, policy_id):
+    def get_access_policy(self, domain_uuid: str, policy_id: str) -> Tuple[bool, Dict[str, Any]]:
+        """Helper to get a specfic access policy.
+        Args:
+            domain_uuid (str): Domain to be queried
+            policy_id (str): Id of the policy to retrieve
+        Returns:
+            tuple: If lookup was successfull and response object
+        """
         url = ACCESS_POLICY_ID_ENDPOINT.format(domain_id=domain_uuid, policy_id=policy_id)
         ret_val, response = self._make_rest_call("get", url, self)
         return ret_val, response
@@ -783,6 +837,13 @@ class FP_Connector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS)
 
     def build_network_objects_list(self, network_ids: list, dommain_uuid: str) -> Tuple[bool, Optional[list]]:
+        """Helper that classifys and builds a list of network objects and groups.
+        Args:
+            network_ids (list): Ids of network objects and groups
+            domain_uuid (str): Domain to be queried
+        Returns:
+            tuple: If lookup was successfull and list of network objects and groups
+        """
         networks_objects = []
         for object_id in network_ids:
             ret_val, object_data = self.get_network_object(dommain_uuid, object_id)
@@ -839,6 +900,14 @@ class FP_Connector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS)
 
     def get_access_control_rule(self, domain_id: str, policy_id: str, rule_id: str) -> Tuple[bool, Dict[str, Any]]:
+        """Helper to get a specfic access control rule belonging to a specfic access policy.
+        Args:
+            domain_id (str): Domain to be queried
+            policy_id (str): Id of the policy to retrieve
+            rule_id (str): Id of the rule to retrieve
+        Returns:
+            tuple: If lookup was successfull and response object
+        """
         url = ACCESS_RULES_ID_ENDPOINT.format(domain_id=domain_id, policy_id=policy_id, rule_id=rule_id)
         ret_val, response = self._make_rest_call("get", url, self)
         return ret_val, response
@@ -943,6 +1012,13 @@ class FP_Connector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS)
 
     def get_deployable_devices(self, domain_id: str, action_result) -> Tuple[bool, Any]:
+        """Helper that gets list of devices ready for deployment.
+        Args:
+            domain_id (str): Domain to be queried
+            action_result (ActionResult): object of ActionResult class
+        Returns:
+            tuple: If lookup was successfull and list of devices
+        """
         url = GET_DEPLOYABLE_DEVICES_ENDPOINT.format(domain_id=domain_id)
         device_lst = []
         ret_val, deployable_devices = self.list_objects(url, action_result, True)
@@ -1023,6 +1099,13 @@ class FP_Connector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS)
 
     def get_intrusion_policy(self, domain_uuid: str, policy_id: str) -> Tuple[int, any]:
+        """Helper to get a specfic intrusion policy.
+        Args:
+            domain_uuid (str): Domain to be queried
+            policy_id (str): Id of the policy to retrieve
+        Returns:
+            tuple: If lookup was successfull and response object
+        """
         url = INTRUSION_POLICY_ID_ENDPOINT.format(domain_id=domain_uuid, policy_id=policy_id)
         ret_val, response = self._make_rest_call("get", url, self)
         return ret_val, response
