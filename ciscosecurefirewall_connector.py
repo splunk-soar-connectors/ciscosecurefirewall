@@ -1,6 +1,6 @@
 # File: ciscosecurefirewall_connector.py
 #
-# Copyright (c) 2024 Splunk Inc.
+# Copyright (c) 2025 Splunk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,12 +13,12 @@
 # either express or implied. See the License for the specific language governing permissions
 # and limitations under the License.
 
-from typing import Any, Dict, Optional, Tuple
+import json
+from typing import Any, Optional
 
 import encryption_helper
 import phantom.app as phantom
 import requests
-import simplejson as json
 from bs4 import BeautifulSoup
 from phantom.action_result import ActionResult
 from phantom.base_connector import BaseConnector
@@ -169,7 +169,7 @@ class FP_Connector(BaseConnector):
         self._state["domains"] = self.domains
         self.save_state(self._state)
 
-    def authenicate_cloud_fmc(self, config: Dict[str, Any]) -> bool:
+    def authenicate_cloud_fmc(self, config: dict[str, Any]) -> bool:
         """
         This method updates the headers and sets the firepower host
         based on the users region when connecting to a cloud FMC.
@@ -313,12 +313,12 @@ class FP_Connector(BaseConnector):
         method: str,
         endpoint: str,
         action_result: ActionResult,
-        json_body: Dict[str, Any] = None,
+        json_body: dict[str, Any] = None,
         headers_only: bool = False,
         first_try: bool = True,
-        params: Dict[str, Any] = None,
+        params: dict[str, Any] = None,
         auth: HTTPBasicAuth = None,
-    ) -> Tuple[bool, Any]:
+    ) -> tuple[bool, Any]:
         """Function that makes the REST call to the app.
         :param method: REST method
         :param endpoint: REST endpoint to be called
@@ -372,7 +372,7 @@ class FP_Connector(BaseConnector):
         """
         return self.fmc_type == "Cloud"
 
-    def _handle_test_connectivity(self, param: Dict[str, Any]) -> bool:
+    def _handle_test_connectivity(self, param: dict[str, Any]) -> bool:
 
         action_result = ActionResult(dict(param))
         self.add_action_result(action_result)
@@ -429,7 +429,7 @@ class FP_Connector(BaseConnector):
 
         return phantom.APP_SUCCESS
 
-    def _handle_list_network_objects(self, param: Dict[str, Any]) -> bool:
+    def _handle_list_network_objects(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -453,7 +453,7 @@ class FP_Connector(BaseConnector):
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def get_network_object(self, domain_id: str, object_id: str) -> Tuple[bool, Dict[str, Any]]:
+    def get_network_object(self, domain_id: str, object_id: str) -> tuple[bool, dict[str, Any]]:
         """Helper to get a specfic network object.
         Args:
             domain_uuid (str): Domain to be queried
@@ -465,7 +465,7 @@ class FP_Connector(BaseConnector):
         ret_val, response = self._make_rest_call("get", url, self)
         return ret_val, response
 
-    def _handle_create_network_object(self, param: Dict[str, Any]) -> bool:
+    def _handle_create_network_object(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -485,7 +485,7 @@ class FP_Connector(BaseConnector):
         summary["Message"] = f"Successfully created network object with name {name}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _handle_update_network_object(self, param: Dict[str, Any]) -> bool:
+    def _handle_update_network_object(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -511,7 +511,7 @@ class FP_Connector(BaseConnector):
         summary["Message"] = f"Successfully updated network object with name {name}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _handle_delete_network_object(self, param: Dict[str, Any]) -> bool:
+    def _handle_delete_network_object(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -547,7 +547,7 @@ class FP_Connector(BaseConnector):
             if domain_name.lower() == leaf_domain:
                 return domain["uuid"]
 
-    def list_objects(self, url: str, action_result: ActionResult, expanded: bool = False) -> Tuple[bool, list]:
+    def list_objects(self, url: str, action_result: ActionResult, expanded: bool = False) -> tuple[bool, list]:
         """Helper to get list any type of FMC objects (groups, policies, rules).
         Args:
             url (str): REST endpoint to query
@@ -581,7 +581,7 @@ class FP_Connector(BaseConnector):
 
         return phantom.APP_SUCCESS, objects
 
-    def _handle_get_network_groups(self, param: Dict[str, Any]) -> bool:
+    def _handle_get_network_groups(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         # Add an action result object to self (BaseConnector) to represent the action for this param
@@ -596,14 +596,17 @@ class FP_Connector(BaseConnector):
             return action_result.get_status()
 
         for item in network_group_list:
-            if not group_name or group_name == item["name"]:
+            if not group_name:
                 action_result.add_data({"name": item["name"], "uuid": item["id"]})
+            if group_name == item["name"]:
+                action_result.add_data({"name": item["name"], "uuid": item["id"]})
+                break
 
         action_result.update_summary({"total_groups_returned": len(action_result.get_data())})
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _handle_create_network_group(self, param: Dict[str, Any]) -> bool:
+    def _handle_create_network_group(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -628,7 +631,7 @@ class FP_Connector(BaseConnector):
         summary["Message"] = f"Successfully added network group with name {group_name}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def get_network_group(self, domain_uuid: str, group_id: str) -> Tuple[bool, Dict[str, Any]]:
+    def get_network_group(self, domain_uuid: str, group_id: str) -> tuple[bool, dict[str, Any]]:
         """Helper to get a specfic network group.
         Args:
             domain_uuid (str): Domain to be queried
@@ -640,7 +643,7 @@ class FP_Connector(BaseConnector):
         ret_val, response = self._make_rest_call("get", url, self)
         return ret_val, response
 
-    def _handle_update_network_group(self, param: Dict[str, Any]) -> bool:
+    def _handle_update_network_group(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -675,7 +678,7 @@ class FP_Connector(BaseConnector):
         summary["Message"] = f"Successfully update network group with id {group_id}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _handle_delete_network_group(self, param: Dict[str, Any]) -> bool:
+    def _handle_delete_network_group(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -693,7 +696,7 @@ class FP_Connector(BaseConnector):
         summary["Message"] = f"Successfully deleted network group with id {group_id}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _handle_get_access_policies(self, param: Dict[str, Any]) -> bool:
+    def _handle_get_access_policies(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -719,7 +722,7 @@ class FP_Connector(BaseConnector):
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _handle_create_access_policy(self, param: Dict[str, Any]) -> bool:
+    def _handle_create_access_policy(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -740,7 +743,7 @@ class FP_Connector(BaseConnector):
         summary["Message"] = f"Successfully created access policy with name {name}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def get_access_policy(self, domain_uuid: str, policy_id: str) -> Tuple[bool, Dict[str, Any]]:
+    def get_access_policy(self, domain_uuid: str, policy_id: str) -> tuple[bool, dict[str, Any]]:
         """Helper to get a specfic access policy.
         Args:
             domain_uuid (str): Domain to be queried
@@ -752,7 +755,7 @@ class FP_Connector(BaseConnector):
         ret_val, response = self._make_rest_call("get", url, self)
         return ret_val, response
 
-    def _handle_update_access_policy(self, param: Dict[str, Any]) -> bool:
+    def _handle_update_access_policy(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -787,7 +790,7 @@ class FP_Connector(BaseConnector):
         summary["Message"] = f"Successfully updated access policy with id {policy_id}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _handle_delete_access_policy(self, param: Dict[str, Any]) -> bool:
+    def _handle_delete_access_policy(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -805,7 +808,7 @@ class FP_Connector(BaseConnector):
         summary["Message"] = f"Successfully deleted access policy with id {policy_id}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _handle_get_access_rules(self, param: Dict[str, Any]) -> bool:
+    def _handle_get_access_rules(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -836,7 +839,7 @@ class FP_Connector(BaseConnector):
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def build_network_objects_list(self, network_ids: list, dommain_uuid: str) -> Tuple[bool, Optional[list]]:
+    def build_network_objects_list(self, network_ids: list, dommain_uuid: str) -> tuple[bool, Optional[list]]:
         """Helper that classifys and builds a list of network objects and groups.
         Args:
             network_ids (list): Ids of network objects and groups
@@ -857,7 +860,7 @@ class FP_Connector(BaseConnector):
 
         return phantom.APP_SUCCESS, networks_objects
 
-    def _handle_create_access_rules(self, param: Dict[str, Any]) -> bool:
+    def _handle_create_access_rules(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -899,7 +902,7 @@ class FP_Connector(BaseConnector):
         summary["Message"] = f"Successfully added access control rule with name {name} to policy {policy_id}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def get_access_control_rule(self, domain_id: str, policy_id: str, rule_id: str) -> Tuple[bool, Dict[str, Any]]:
+    def get_access_control_rule(self, domain_id: str, policy_id: str, rule_id: str) -> tuple[bool, dict[str, Any]]:
         """Helper to get a specfic access control rule belonging to a specfic access policy.
         Args:
             domain_id (str): Domain to be queried
@@ -912,7 +915,7 @@ class FP_Connector(BaseConnector):
         ret_val, response = self._make_rest_call("get", url, self)
         return ret_val, response
 
-    def _handle_update_access_rule(self, param: Dict[str, Any]) -> bool:
+    def _handle_update_access_rule(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -973,7 +976,7 @@ class FP_Connector(BaseConnector):
         summary["Message"] = f"Successfully updated access control rule with id {rule_id}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _handle_delete_access_rule(self, param: Dict[str, Any]) -> bool:
+    def _handle_delete_access_rule(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -992,7 +995,7 @@ class FP_Connector(BaseConnector):
         summary["Message"] = f"Successfully delete access control rule with id {rule_id}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _handle_list_devices(self, param: Dict[str, Any]) -> bool:
+    def _handle_list_devices(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -1011,7 +1014,7 @@ class FP_Connector(BaseConnector):
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def get_deployable_devices(self, domain_id: str, action_result) -> Tuple[bool, Any]:
+    def get_deployable_devices(self, domain_id: str, action_result) -> tuple[bool, Any]:
         """Helper that gets list of devices ready for deployment.
         Args:
             domain_id (str): Domain to be queried
@@ -1030,7 +1033,7 @@ class FP_Connector(BaseConnector):
 
         return phantom.APP_SUCCESS, device_lst
 
-    def _handle_get_deployable_devices(self, param: Dict[str, Any]) -> bool:
+    def _handle_get_deployable_devices(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -1048,7 +1051,7 @@ class FP_Connector(BaseConnector):
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _handle_deploy_devices(self, param: Dict[str, Any]) -> bool:
+    def _handle_deploy_devices(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -1080,7 +1083,7 @@ class FP_Connector(BaseConnector):
         summary["Message"] = "Successfully deployed devices"
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _handle_get_deployment_status(self, param: Dict[str, Any]) -> bool:
+    def _handle_get_deployment_status(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -1098,7 +1101,7 @@ class FP_Connector(BaseConnector):
         summary["Message"] = f"Successfully retrieved status for deployment {deployment_id}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def get_intrusion_policy(self, domain_uuid: str, policy_id: str) -> Tuple[int, any]:
+    def get_intrusion_policy(self, domain_uuid: str, policy_id: str) -> tuple[int, any]:
         """Helper to get a specfic intrusion policy.
         Args:
             domain_uuid (str): Domain to be queried
@@ -1110,7 +1113,7 @@ class FP_Connector(BaseConnector):
         ret_val, response = self._make_rest_call("get", url, self)
         return ret_val, response
 
-    def _handle_list_intrusion_policies(self, param: Dict[str, Any]) -> bool:
+    def _handle_list_intrusion_policies(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -1136,7 +1139,7 @@ class FP_Connector(BaseConnector):
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _handle_create_intrusion_policy(self, param: Dict[str, Any]) -> bool:
+    def _handle_create_intrusion_policy(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
         action_result = self.add_action_result(ActionResult(dict(param)))
         name = param["name"]
@@ -1161,7 +1164,7 @@ class FP_Connector(BaseConnector):
         summary["Message"] = f"Successfully added intrusion policy with name {name}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _handle_update_intrusion_policy(self, param: Dict[str, Any]) -> bool:
+    def _handle_update_intrusion_policy(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
         action_result = self.add_action_result(ActionResult(dict(param)))
 
@@ -1189,7 +1192,7 @@ class FP_Connector(BaseConnector):
         summary["Message"] = f"Successfully updated intrusion policy with id {policy_id}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _handle_delete_intrusion_policy(self, param: Dict[str, Any]) -> bool:
+    def _handle_delete_intrusion_policy(self, param: dict[str, Any]) -> bool:
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
         action_result = self.add_action_result(ActionResult(dict(param)))
 
@@ -1206,7 +1209,7 @@ class FP_Connector(BaseConnector):
         summary["Message"] = f"Successfully delete intrusion policy with id {policy_id}"
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def handle_action(self, param: Dict[str, Any]) -> bool:
+    def handle_action(self, param: dict[str, Any]) -> bool:
 
         ret_val = phantom.APP_SUCCESS
 

@@ -1,7 +1,7 @@
 {
     "appid": "268cecc2-a5ea-438b-96f8-3ab1d8443d93",
     "name": "Cisco Secure Firewall",
-    "description": "This app interfaces with Cisco Firepower devices to adds, updates and deletes network objects, network object groups, access policies and access rules",
+    "description": "This app interfaces with Cisco Firepower devices to add, update and delete network objects, network object groups, access policies and access rules",
     "publisher": "Splunk",
     "package_name": "phantom_ciscosecurefirewall",
     "type": "firewall",
@@ -212,7 +212,7 @@
                     "order": 1
                 },
                 "value": {
-                    "description": "Value of the network object. If type if Range specify value in the following format: ip1-ip2",
+                    "description": "Value of the network object. If type is Range specify value in the following format: ip1-ip2",
                     "data_type": "string",
                     "required": true,
                     "order": 2
@@ -356,7 +356,7 @@
                     "order": 1
                 },
                 "type": {
-                    "description": "Network object type. Note this cannot change and is only used to identify the network object value you'd liek to update.",
+                    "description": "Network object type. Note this cannot change and is only used to identify the network object value you'd like to update.",
                     "data_type": "string",
                     "value_list": [
                        "Host",
@@ -872,7 +872,7 @@
                     "order": 2
                 },
                 "network_object_ids_to_remove": {
-                    "description": "Network objects to remove frin the group.",
+                    "description": "Network objects to remove from the group.",
                     "data_type": "string",
                     "example_values": [
                         "b2df29e8-5e6f-4c5d-9d5e-3fa9b3c9467b, a1c2f7d9-4b5e-42b1-8d9f-2f6b4a8e5e3c"
@@ -1470,7 +1470,7 @@
         },
         {
             "action": "delete access control policies",
-            "description": "Deleted the specified access control policy",
+            "description": "Deletes the specified access control policy",
             "type": "generic",
             "identifier": "delete_access_policy",
             "read_only": false,
@@ -2811,7 +2811,7 @@
         },
         {
             "action": "delete intrusion policy",
-            "description": "Deleted the specified access intrusion policy",
+            "description": "Deletes the specified access intrusion policy",
             "type": "generic",
             "identifier": "delete_intrusion_policy",
             "read_only": false,
@@ -3239,21 +3239,5 @@
             },
             "versions": "EQ(*)"
         }
-    ],
-    "pip_dependencies": {
-        "wheel": [
-            {
-                "module": "simplejson",
-                "input_file": "wheels/py36/simplejson-3.17.2-cp36-cp36m-manylinux2010_x86_64.manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
-            }
-        ]
-    },
-    "pip39_dependencies": {
-        "wheel": [
-            {
-                "module": "simplejson",
-                "input_file": "wheels/py39/simplejson-3.17.2-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
-            }
-        ]
-    }
+    ]
 }
