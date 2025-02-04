@@ -6,7 +6,7 @@ Product Vendor: Cisco Systems \
 Product Name: Cisco Secure Firewall \
 Minimum Product Version: 6.3.0
 
-This app interfaces with Cisco Firepower devices to adds, updates and deletes network objects, network object groups, access policies and access rules
+This app interfaces with Cisco Firepower devices to add, update and delete network objects, network object groups, access policies and access rules
 
 This connector supports both cloud and on-prem delivered FMC. Below are the steps for connecting to both
 
@@ -21,9 +21,9 @@ This connector supports both cloud and on-prem delivered FMC. Below are the step
 ## Connecting to an on-prem delivered FMC
 
 1. On the SOAR asset setting page select On-prem for the type of FMC you are connecting to
-1. Specify the device ip/hostname of your on-prem FMC along with the username and password used ot login to FMC
+1. Specify the device ip/hostname of your on-prem FMC along with the username and password used to login to FMC
 
-**Note** that you can optionally specify a default firepower domain that will be queried. You an overide this domain when running an action. In addition, cloud versions of FMC only support the default domain, to achieve multi tenancy you must use seperate tenants.
+**Note** that you can optionally specify a default firepower domain that will be queried. You can override this domain when running an action. In addition, cloud versions of FMC only support the default domain. To achieve multi tenancy you must use separate tenants.
 
 ### Configuration variables
 
@@ -54,7 +54,7 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 [get access control policies](#action-get-access-control-policies) - Gets all or a particular access control policy in the FMC host for a particular domain \
 [create access control policy](#action-create-access-control-policy) - Create an access control policy \
 [update access control policy](#action-update-access-control-policy) - Update an access control policy \
-[delete access control policies](#action-delete-access-control-policies) - Deleted the specified access control policy \
+[delete access control policies](#action-delete-access-control-policies) - Deletes the specified access control policy \
 [get access control rules](#action-get-access-control-rules) - Gets all access control rules associated with a particular access control policy \
 [create access control rule](#action-create-access-control-rule) - Creates an access control rule associated with a particular access control policy \
 [update access control rule](#action-update-access-control-rule) - Updates an access control rule associated with a particular access control policy \
@@ -62,7 +62,7 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 [list intrusion policies](#action-list-intrusion-policies) - Gets all intrusion polcies in the FMC host for a particular domain \
 [create intrusion policy](#action-create-intrusion-policy) - Create an intrusion policy \
 [update intrusion policy](#action-update-intrusion-policy) - Update an intrusion policy \
-[delete intrusion policy](#action-delete-intrusion-policy) - Deleted the specified access intrusion policy \
+[delete intrusion policy](#action-delete-intrusion-policy) - Deletes the specified access intrusion policy \
 [list devices](#action-list-devices) - Lists all devices belonging to a particular domain/tenant \
 [get deployable devices](#action-get-deployable-devices) - List all devices with configuration chnges that are ready to be deployed \
 [deploy devices](#action-deploy-devices) - Deploy devices that are ready to deploy \
@@ -128,7 +128,7 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 --------- | -------- | ----------- | ---- | --------
 **name** | required | Network object name | string | |
 **type** | required | Network object type | string | |
-**value** | required | Value of the network object. If type if Range specify value in the following format: ip1-ip2 | string | |
+**value** | required | Value of the network object. If type is Range specify value in the following format: ip1-ip2 | string | |
 **domain_name** | optional | Firepower Domain. If none is specified the default domain will be queried | string | |
 
 #### Action Output
@@ -171,7 +171,7 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 --------- | -------- | ----------- | ---- | --------
 **object_id** | required | Network object id | string | |
 **name** | optional | Network object name | string | |
-**type** | optional | Network object type. Note this cannot change and is only used to identify the network object value you'd liek to update. | string | |
+**type** | optional | Network object type. Note this cannot change and is only used to identify the network object value you'd like to update. | string | |
 **value** | optional | Value of the network object. If type is Range specify value in the following format: ip1-ip2 | string | |
 **domain_name** | optional | Firepower Domain. If none is specified the default domain will be queried | string | |
 
@@ -327,7 +327,7 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **network_group_id** | required | Network group to update | string | |
 **name** | optional | Name of the network group | string | |
 **network_object_ids_to_add** | optional | Network objects to add to the group. Note these ids must already exist in FMC | string | |
-**network_object_ids_to_remove** | optional | Network objects to remove frin the group. | string | |
+**network_object_ids_to_remove** | optional | Network objects to remove from the group. | string | |
 **domain_name** | optional | Firepower Domain. If none is specified the default domain will be queried | string | |
 
 #### Action Output
@@ -502,7 +502,7 @@ action_result.data.\*.defaultAction.action | string | | BLOCK |
 
 ## action: 'delete access control policies'
 
-Deleted the specified access control policy
+Deletes the specified access control policy
 
 Type: **generic** \
 Read only: **False**
@@ -860,7 +860,7 @@ action_result.data.\*.inspectionMode | string | | DETECTION |
 
 ## action: 'delete intrusion policy'
 
-Deleted the specified access intrusion policy
+Deletes the specified access intrusion policy
 
 Type: **generic** \
 Read only: **False**
