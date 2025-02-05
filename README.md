@@ -1,7 +1,7 @@
 # Cisco Secure Firewall
 
 Publisher: Splunk \
-Connector Version: 1.0.0 \
+Connector Version: 1.0.1 \
 Product Vendor: Cisco Systems \
 Product Name: Cisco Secure Firewall \
 Minimum Product Version: 6.3.0

@@ -7,7 +7,7 @@
     "type": "firewall",
     "license": "Copyright (c) 2025 Splunk Inc.",
     "main_module": "ciscosecurefirewall_connector.py",
-    "app_version": "1.0.0",
+    "app_version": "1.0.1",
     "utctime_updated": "2024-12-04T23:13:40.000000Z",
     "product_vendor": "Cisco Systems",
     "product_name": "Cisco Secure Firewall",
@@ -28,7 +28,7 @@
             "value_list": [
                 "On-prem",
                 "Cloud"
-             ],
+            ],
             "required": true
         },
         "firepower_host": {
@@ -70,7 +70,7 @@
                 "APJ",
                 "AUS",
                 "IN"
-             ],
+            ],
             "order": 7
         }
     },
@@ -91,7 +91,7 @@
             "type": "investigate",
             "read_only": true,
             "identifier": "list_network_objects",
-            "parameters":{
+            "parameters": {
                 "name": {
                     "description": "Network object name to filter results by",
                     "data_type": "string",
@@ -101,10 +101,10 @@
                     "description": "Network object type to filter results by",
                     "data_type": "string",
                     "value_list": [
-                       "Host",
-                       "Network",
-                       "Range",
-                       "FQDN"
+                        "Host",
+                        "Network",
+                        "Range",
+                        "FQDN"
                     ],
                     "order": 1
                 },
@@ -184,7 +184,7 @@
                 "title": "Network Objects",
                 "type": "table"
             },
-            "versions": "EQ(*)" 
+            "versions": "EQ(*)"
         },
         {
             "action": "create network object",
@@ -192,7 +192,7 @@
             "type": "generic",
             "identifier": "create_network_object",
             "read_only": false,
-            "parameters":{
+            "parameters": {
                 "name": {
                     "description": "Network object name",
                     "data_type": "string",
@@ -204,10 +204,10 @@
                     "data_type": "string",
                     "required": true,
                     "value_list": [
-                       "Host",
-                       "Network",
-                       "Range",
-                       "FQDN"
+                        "Host",
+                        "Network",
+                        "Range",
+                        "FQDN"
                     ],
                     "order": 1
                 },
@@ -335,7 +335,7 @@
                 "title": "Create Network Object",
                 "type": "table"
             },
-            "versions": "EQ(*)" 
+            "versions": "EQ(*)"
         },
         {
             "action": "update network object",
@@ -343,7 +343,7 @@
             "type": "generic",
             "identifier": "update_network_object",
             "read_only": false,
-            "parameters":{
+            "parameters": {
                 "object_id": {
                     "description": "Network object id",
                     "data_type": "string",
@@ -359,10 +359,10 @@
                     "description": "Network object type. Note this cannot change and is only used to identify the network object value you'd like to update.",
                     "data_type": "string",
                     "value_list": [
-                       "Host",
-                       "Network",
-                       "Range",
-                       "FQDN"
+                        "Host",
+                        "Network",
+                        "Range",
+                        "FQDN"
                     ],
                     "order": 2
                 },
@@ -493,16 +493,15 @@
                 "title": "Update Network Object",
                 "type": "table"
             },
-            "versions": "EQ(*)" 
+            "versions": "EQ(*)"
         },
-
         {
             "action": "delete network object",
             "description": "Deletes a network object in FMC",
             "type": "generic",
             "read_only": false,
             "identifier": "delete_network_object",
-            "parameters":{
+            "parameters": {
                 "object_id": {
                     "description": "Network object id",
                     "data_type": "string",
@@ -514,10 +513,10 @@
                     "data_type": "string",
                     "required": true,
                     "value_list": [
-                       "Host",
-                       "Network",
-                       "Range",
-                       "FQDN"
+                        "Host",
+                        "Network",
+                        "Range",
+                        "FQDN"
                     ],
                     "order": 1
                 },
@@ -635,7 +634,7 @@
                 "title": "Delete Network Object",
                 "type": "table"
             },
-            "versions": "EQ(*)" 
+            "versions": "EQ(*)"
         },
         {
             "action": "get network group objects",
@@ -1217,9 +1216,9 @@
                     "data_type": "string",
                     "required": true,
                     "value_list": [
-                       "BLOCK",
-                       "TRUST",
-                       "NETWORK_DISCOVERY"
+                        "BLOCK",
+                        "TRUST",
+                        "NETWORK_DISCOVERY"
                     ],
                     "order": 2
                 },
@@ -1708,7 +1707,7 @@
                         "BLOCK_RESET",
                         "BLOCK_INTERACTIVE",
                         "BLOCK_RESET_INTERACTIVE"
-                     ],
+                    ],
                     "order": 2
                 },
                 "enabled": {
@@ -1883,7 +1882,8 @@
                     "data_path": "action_result.data.*.sourceNetworks.objects.*.type",
                     "data_type": "string",
                     "example_values": [
-                        "NetworkGroup", "Network"
+                        "NetworkGroup",
+                        "Network"
                     ]
                 },
                 {
@@ -1897,7 +1897,6 @@
                 {
                     "data_path": "action_result.data.*.destinationNetworks.objects.*.id",
                     "data_type": "string"
-
                 },
                 {
                     "data_path": "action_result.data.*.destinationNetworks.objects.*.name",
@@ -1907,7 +1906,8 @@
                     "data_path": "action_result.data.*.destinationNetworks.objects.*.type",
                     "data_type": "string",
                     "example_values": [
-                        "NetworkGroup", "Network"
+                        "NetworkGroup",
+                        "Network"
                     ]
                 },
                 {
@@ -1956,7 +1956,7 @@
                         "BLOCK_RESET",
                         "BLOCK_INTERACTIVE",
                         "BLOCK_RESET_INTERACTIVE"
-                     ],
+                    ],
                     "order": 3
                 },
                 "enabled": {
@@ -2176,7 +2176,8 @@
                     "data_path": "action_result.data.*.sourceNetworks.objects.*.type",
                     "data_type": "string",
                     "example_values": [
-                        "NetworkGroup", "Network"
+                        "NetworkGroup",
+                        "Network"
                     ]
                 },
                 {
@@ -2199,7 +2200,8 @@
                     "data_path": "action_result.data.*.destinationNetworks.objects.*.type",
                     "data_type": "string",
                     "example_values": [
-                        "NetworkGroup", "Network"
+                        "NetworkGroup",
+                        "Network"
                     ]
                 },
                 {
@@ -2377,7 +2379,8 @@
                     "data_path": "action_result.data.*.sourceNetworks.objects.*.type",
                     "data_type": "string",
                     "example_values": [
-                        "NetworkGroup", "Network"
+                        "NetworkGroup",
+                        "Network"
                     ]
                 },
                 {
@@ -2400,7 +2403,8 @@
                     "data_path": "action_result.data.*.destinationNetworks.objects.*.type",
                     "data_type": "string",
                     "example_values": [
-                        "NetworkGroup", "Network"
+                        "NetworkGroup",
+                        "Network"
                     ]
                 },
                 {
@@ -2503,15 +2507,15 @@
                 "base_policy": {
                     "description": "Base intrusion policy ID. Can be found using list intrusion policies",
                     "data_type": "string",
-                    "required": true, 
+                    "required": true,
                     "order": 2
                 },
                 "inspection_mode": {
                     "description": "The inspection mode for the Snort 3 engine",
                     "data_type": "string",
                     "value_list": [
-                       "DETECTION",
-                       "PREVENTION"
+                        "DETECTION",
+                        "PREVENTION"
                     ],
                     "order": 3
                 },
@@ -2671,8 +2675,8 @@
                     "description": "The inspection mode for the Snort 3 engine",
                     "data_type": "string",
                     "value_list": [
-                       "DETECTION",
-                       "PREVENTION"
+                        "DETECTION",
+                        "PREVENTION"
                     ],
                     "order": 4
                 },
