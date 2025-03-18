@@ -312,6 +312,7 @@ action_result.data.\*.metadata.domain.lastUser.name | string | | |
 action_result.data.\*.metadata.domain.timestamp | numeric | | |
 action_result.data.\*.metadata.domain.parentType | string | | |
 action_result.data.\*.metadata.overridable | boolean | | |
+action_result.parameter.overridable | boolean | | |
 
 ## action: 'update network group object'
 
@@ -422,6 +423,7 @@ summary.total_objects_successful | numeric | | |
 action_result.parameter.domain_name | string | | |
 action_result.data.\*.name | string | | new-policy |
 action_result.data.\*.policy_id | string | | 00000000-0000-0ed3-0000-012884902138 |
+action_result.parameter.policy_id | string | | |
 
 ## action: 'create access control policy'
 
@@ -565,6 +567,7 @@ action_result.parameter.policy_id | string | | |
 action_result.parameter.domain_name | string | | |
 action_result.data.\*.id | string | | |
 action_result.data.\*.name | string | | new-rule |
+action_result.parameter.rule_id | string | | |
 
 ## action: 'create access control rule'
 
@@ -772,6 +775,7 @@ summary.total_objects_successful | numeric | | |
 action_result.parameter.domain_name | string | | |
 action_result.data.\*.name | string | | new-policy |
 action_result.data.\*.policy_id | string | | 00000000-0000-0ed3-0000-012884902138 |
+action_result.parameter.policy_id | string | | |
 
 ## action: 'create intrusion policy'
 
@@ -857,6 +861,7 @@ action_result.data.\*.basePolicy.inspectionMode | string | | DETECTION |
 action_result.data.\*.basePolicy.isSystemDefined | boolean | | |
 action_result.data.\*.description | string | | |
 action_result.data.\*.inspectionMode | string | | DETECTION |
+action_result.parameter.replicate_inspection_mode | boolean | | |
 
 ## action: 'delete intrusion policy'
 

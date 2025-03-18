@@ -836,6 +836,10 @@
                 {
                     "data_path": "action_result.data.*.metadata.overridable",
                     "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.parameter.overridable",
+                    "data_type": "boolean"
                 }
             ],
             "render": {
@@ -1185,6 +1189,10 @@
                     ],
                     "column_name": "Policy Id",
                     "column_order": 1
+                },
+                {
+                    "data_path": "action_result.parameter.policy_id",
+                    "data_type": "string"
                 }
             ],
             "render": {
@@ -1668,6 +1676,10 @@
                     ],
                     "column_name": "Rule Name",
                     "column_order": 1
+                },
+                {
+                    "data_path": "action_result.parameter.rule_id",
+                    "data_type": "string"
                 }
             ],
             "render": {
@@ -2478,6 +2490,10 @@
                     ],
                     "column_name": "Policy Id",
                     "column_order": 1
+                },
+                {
+                    "data_path": "action_result.parameter.policy_id",
+                    "data_type": "string"
                 }
             ],
             "render": {
@@ -2805,6 +2821,10 @@
                     ],
                     "column_name": "Policy Inspection Mode",
                     "column_order": 2
+                },
+                {
+                    "data_path": "action_result.parameter.replicate_inspection_mode",
+                    "data_type": "boolean"
                 }
             ],
             "render": {
