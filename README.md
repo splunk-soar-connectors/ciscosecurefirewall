@@ -1,9 +1,9 @@
 # Cisco Secure Firewall
 
-Publisher: Splunk \
-Connector Version: 1.0.1 \
-Product Vendor: Cisco Systems \
-Product Name: Cisco Secure Firewall \
+Publisher: Splunk <br>
+Connector Version: 1.0.1 <br>
+Product Vendor: Cisco Systems <br>
+Product Name: Cisco Secure Firewall <br>
 Minimum Product Version: 6.3.0
 
 This app interfaces with Cisco Firepower devices to add, update and delete network objects, network object groups, access policies and access rules
@@ -42,37 +42,37 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 
 ### Supported Actions
 
-[test connectivity](#action-test-connectivity) - Validate the asset configuration for connectivity \
-[list network objects](#action-list-network-objects) - List network object in FMC \
-[create network object](#action-create-network-object) - Creates a network object in FMC \
-[update network object](#action-update-network-object) - Updates a network object in FMC \
-[delete network object](#action-delete-network-object) - Deletes a network object in FMC \
-[get network group objects](#action-get-network-group-objects) - Gets all network group objects in FMC host or a specfic network group \
-[create network group object](#action-create-network-group-object) - Create a network group object \
-[update network group object](#action-update-network-group-object) - Update a network group object \
-[delete network group object](#action-delete-network-group-object) - Delete a network group object \
-[get access control policies](#action-get-access-control-policies) - Gets all or a particular access control policy in the FMC host for a particular domain \
-[create access control policy](#action-create-access-control-policy) - Create an access control policy \
-[update access control policy](#action-update-access-control-policy) - Update an access control policy \
-[delete access control policies](#action-delete-access-control-policies) - Deletes the specified access control policy \
-[get access control rules](#action-get-access-control-rules) - Gets all access control rules associated with a particular access control policy \
-[create access control rule](#action-create-access-control-rule) - Creates an access control rule associated with a particular access control policy \
-[update access control rule](#action-update-access-control-rule) - Updates an access control rule associated with a particular access control policy \
-[delete access control rules](#action-delete-access-control-rules) - Deletes access control rule associated with a particular access control policy \
-[list intrusion policies](#action-list-intrusion-policies) - Gets all intrusion polcies in the FMC host for a particular domain \
-[create intrusion policy](#action-create-intrusion-policy) - Create an intrusion policy \
-[update intrusion policy](#action-update-intrusion-policy) - Update an intrusion policy \
-[delete intrusion policy](#action-delete-intrusion-policy) - Deletes the specified access intrusion policy \
-[list devices](#action-list-devices) - Lists all devices belonging to a particular domain/tenant \
-[get deployable devices](#action-get-deployable-devices) - List all devices with configuration chnges that are ready to be deployed \
-[deploy devices](#action-deploy-devices) - Deploy devices that are ready to deploy \
+[test connectivity](#action-test-connectivity) - Validate the asset configuration for connectivity <br>
+[list network objects](#action-list-network-objects) - List network object in FMC <br>
+[create network object](#action-create-network-object) - Creates a network object in FMC <br>
+[update network object](#action-update-network-object) - Updates a network object in FMC <br>
+[delete network object](#action-delete-network-object) - Deletes a network object in FMC <br>
+[get network group objects](#action-get-network-group-objects) - Gets all network group objects in FMC host or a specfic network group <br>
+[create network group object](#action-create-network-group-object) - Create a network group object <br>
+[update network group object](#action-update-network-group-object) - Update a network group object <br>
+[delete network group object](#action-delete-network-group-object) - Delete a network group object <br>
+[get access control policies](#action-get-access-control-policies) - Gets all or a particular access control policy in the FMC host for a particular domain <br>
+[create access control policy](#action-create-access-control-policy) - Create an access control policy <br>
+[update access control policy](#action-update-access-control-policy) - Update an access control policy <br>
+[delete access control policies](#action-delete-access-control-policies) - Deletes the specified access control policy <br>
+[get access control rules](#action-get-access-control-rules) - Gets all access control rules associated with a particular access control policy <br>
+[create access control rule](#action-create-access-control-rule) - Creates an access control rule associated with a particular access control policy <br>
+[update access control rule](#action-update-access-control-rule) - Updates an access control rule associated with a particular access control policy <br>
+[delete access control rules](#action-delete-access-control-rules) - Deletes access control rule associated with a particular access control policy <br>
+[list intrusion policies](#action-list-intrusion-policies) - Gets all intrusion polcies in the FMC host for a particular domain <br>
+[create intrusion policy](#action-create-intrusion-policy) - Create an intrusion policy <br>
+[update intrusion policy](#action-update-intrusion-policy) - Update an intrusion policy <br>
+[delete intrusion policy](#action-delete-intrusion-policy) - Deletes the specified access intrusion policy <br>
+[list devices](#action-list-devices) - Lists all devices belonging to a particular domain/tenant <br>
+[get deployable devices](#action-get-deployable-devices) - List all devices with configuration chnges that are ready to be deployed <br>
+[deploy devices](#action-deploy-devices) - Deploy devices that are ready to deploy <br>
 [get deployment status](#action-get-deployment-status) - Get status of a deployment
 
 ## action: 'test connectivity'
 
 Validate the asset configuration for connectivity
 
-Type: **test** \
+Type: **test** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -87,7 +87,7 @@ No Output
 
 List network object in FMC
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -119,7 +119,7 @@ action_result.data.\*.links.parent | string | | |
 
 Creates a network object in FMC
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
@@ -162,7 +162,7 @@ action_result.data.\*.metadata.overridable | boolean | | |
 
 Updates a network object in FMC
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
@@ -207,7 +207,7 @@ action_result.data.\*.metadata.overridable | boolean | | |
 
 Deletes a network object in FMC
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
@@ -248,7 +248,7 @@ action_result.data.\*.metadata.overridable | boolean | | |
 
 Gets all network group objects in FMC host or a specfic network group
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -275,7 +275,7 @@ action_result.data.\*.name | string | | |
 
 Create a network group object
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
@@ -318,7 +318,7 @@ action_result.parameter.overridable | boolean | | |
 
 Update a network group object
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
@@ -363,7 +363,7 @@ action_result.data.\*.metadata.overridable | boolean | | |
 
 Delete a network group object
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
@@ -402,7 +402,7 @@ action_result.data.\*.metadata.overridable | boolean | | |
 
 Gets all or a particular access control policy in the FMC host for a particular domain
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -429,7 +429,7 @@ action_result.parameter.policy_id | string | | |
 
 Create an access control policy
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
@@ -465,7 +465,7 @@ action_result.data.\*.description | string | | |
 
 Update an access control policy
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
@@ -506,7 +506,7 @@ action_result.data.\*.defaultAction.action | string | | BLOCK |
 
 Deletes the specified access control policy
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
@@ -544,7 +544,7 @@ action_result.data.\*.securityIntelligence.links.self | string | | |
 
 Gets all access control rules associated with a particular access control policy
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -573,7 +573,7 @@ action_result.parameter.rule_id | string | | |
 
 Creates an access control rule associated with a particular access control policy
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
@@ -632,7 +632,7 @@ action_result.data.\*.destinationNetworks.objects.\*.overridable | boolean | | |
 
 Updates an access control rule associated with a particular access control policy
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
@@ -700,7 +700,7 @@ action_result.data.\*.destinationNetworks.objects.\*.overridable | boolean | | |
 
 Deletes access control rule associated with a particular access control policy
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
@@ -754,7 +754,7 @@ action_result.data.\*.destinationNetworks.objects.\*.overridable | boolean | | |
 
 Gets all intrusion polcies in the FMC host for a particular domain
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -781,7 +781,7 @@ action_result.parameter.policy_id | string | | |
 
 Create an intrusion policy
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
@@ -822,7 +822,7 @@ action_result.data.\*.inspectionMode | string | | DETECTION |
 
 Update an intrusion policy
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
@@ -867,7 +867,7 @@ action_result.parameter.replicate_inspection_mode | boolean | | |
 
 Deletes the specified access intrusion policy
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
@@ -902,7 +902,7 @@ action_result.data.\*.inspectionMode | string | | DETECTION |
 
 Lists all devices belonging to a particular domain/tenant
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -929,7 +929,7 @@ action_result.data.\*.links.self | string | | |
 
 List all devices with configuration chnges that are ready to be deployed
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -955,7 +955,7 @@ action_result.data.\*.type | string | | SENSOR |
 
 Deploy devices that are ready to deploy
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -985,7 +985,7 @@ action_result.data.\*.deviceList.\* | string | | |
 
 Get status of a deployment
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 #### Action Parameters
