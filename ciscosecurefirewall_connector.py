@@ -72,7 +72,7 @@ class FP_Connector(BaseConnector):
         self.password = ""
         self.firepower_host = ""
         self.headers = HEADERS
-        self.verify = False
+        self.verify = True
         self.default_firepower_domain = None
         self.refresh_count = 0
 
@@ -125,7 +125,7 @@ class FP_Connector(BaseConnector):
             self.username = config["username"]
             self.password = config["password"]
             self.default_firepower_domain = config.get("domain_name")
-            self.verify = config.get("verify_server_cert", False)
+            self.verify = config.get("verify_server_cert", True)
             self.refresh_token = self._state.get(REFRESH_COUNT, 0)
 
             ret_val = self._get_token(action_result)
