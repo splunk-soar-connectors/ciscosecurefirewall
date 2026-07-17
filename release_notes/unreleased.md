@@ -2,3 +2,4 @@
 
 * Enabled TLS server certificate verification by default.
 * Encrypted both FMC access and refresh tokens before every state-file write.
+* Encoded deployment IDs before including them in FMC API paths.

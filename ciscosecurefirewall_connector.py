@@ -15,6 +15,7 @@
 
 import json
 from typing import Any, Optional
+from urllib.parse import quote
 
 import encryption_helper
 import phantom.app as phantom
@@ -1096,8 +1097,9 @@ class FP_Connector(BaseConnector):
         domain_uuid = self.get_domain_id(param.get("domain_name"))
 
         deployment_id = param["deployment_id"]
+        encoded_deployment_id = quote(deployment_id, safe="")
 
-        url = DEPLOYMENT_STATUS_ENDPOINT.format(domain_id=domain_uuid, task_id=deployment_id)
+        url = DEPLOYMENT_STATUS_ENDPOINT.format(domain_id=domain_uuid, task_id=encoded_deployment_id)
         ret_val, response = self._make_rest_call("get", url, action_result)
         if phantom.is_fail(ret_val):
             return action_result.get_status()
