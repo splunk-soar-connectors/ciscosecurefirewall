@@ -1,6 +1,6 @@
 # File: ciscosecurefirewall_connector.py
 #
-# Copyright (c) 2025 Splunk Inc.
+# Copyright (c) 2025-2026 Splunk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 
 import json
 from typing import Any, Optional
+from urllib.parse import quote
 
 import encryption_helper
 import phantom.app as phantom
@@ -72,7 +73,7 @@ class FP_Connector(BaseConnector):
         self.password = ""
         self.firepower_host = ""
         self.headers = HEADERS
-        self.verify = False
+        self.verify = True
         self.default_firepower_domain = None
         self.refresh_count = 0
 
@@ -112,9 +113,10 @@ class FP_Connector(BaseConnector):
         else:
             self.asset_id = self.get_asset_id()
             try:
-                if TOKEN_KEY in self._state:
-                    self.debug_print("Decrypting the token")
-                    self._state[TOKEN_KEY] = encryption_helper.decrypt(self._state[TOKEN_KEY], self.asset_id)
+                for token_key in (TOKEN_KEY, REFRESH_TOKEN_KEY):
+                    if token_key in self._state:
+                        self.debug_print(f"Decrypting {token_key}")
+                        self._state[token_key] = encryption_helper.decrypt(self._state[token_key], self.asset_id)
                 if "domains" in self._state:
                     self.domains = self._state["domains"]
             except Exception as e:
@@ -125,8 +127,8 @@ class FP_Connector(BaseConnector):
             self.username = config["username"]
             self.password = config["password"]
             self.default_firepower_domain = config.get("domain_name")
-            self.verify = config.get("verify_server_cert", False)
-            self.refresh_token = self._state.get(REFRESH_COUNT, 0)
+            self.verify = config.get("verify_server_cert", True)
+            self.refresh_count = self._state.get(REFRESH_COUNT, 0)
 
             ret_val = self._get_token(action_result)
 
@@ -147,16 +149,24 @@ class FP_Connector(BaseConnector):
         required. Another usage is cleanup, disconnect from remote
         devices etc.
         """
+        if not self.is_cloud_deployment():
+            self._save_encrypted_state()
+        return phantom.APP_SUCCESS
+
+    def _save_encrypted_state(self) -> None:
+        """Persist a copy of state with both FMC bearer tokens encrypted."""
+        state_to_save = dict(self._state)
         try:
-            if TOKEN_KEY in self._state:
-                self.debug_print("Encrypting the token")
-                self._state[TOKEN_KEY] = encryption_helper.encrypt(self._state[TOKEN_KEY], self.asset_id)
+            for token_key in (TOKEN_KEY, REFRESH_TOKEN_KEY):
+                if state_to_save.get(token_key):
+                    self.debug_print(f"Encrypting {token_key}")
+                    state_to_save[token_key] = encryption_helper.encrypt(state_to_save[token_key], self.asset_id)
         except Exception as e:
             self.debug_print(f"{ENCRYPTION_ERR}: {e!s}")
             self._reset_state_file()
+            return
 
-        self.save_state(self._state)
-        return phantom.APP_SUCCESS
+        self.save_state(state_to_save)
 
     def _update_state(self) -> None:
         """
@@ -166,7 +176,7 @@ class FP_Connector(BaseConnector):
         self._state[REFRESH_TOKEN_KEY] = self.refresh_token
         self._state[REFRESH_COUNT] = self.refresh_count
         self._state["domains"] = self.domains
-        self.save_state(self._state)
+        self._save_encrypted_state()
 
     def authenicate_cloud_fmc(self, config: dict[str, Any]) -> bool:
         """
@@ -1087,8 +1097,9 @@ class FP_Connector(BaseConnector):
         domain_uuid = self.get_domain_id(param.get("domain_name"))
 
         deployment_id = param["deployment_id"]
+        encoded_deployment_id = quote(deployment_id, safe="")
 
-        url = DEPLOYMENT_STATUS_ENDPOINT.format(domain_id=domain_uuid, task_id=deployment_id)
+        url = DEPLOYMENT_STATUS_ENDPOINT.format(domain_id=domain_uuid, task_id=encoded_deployment_id)
         ret_val, response = self._make_rest_call("get", url, action_result)
         if phantom.is_fail(ret_val):
             return action_result.get_status()

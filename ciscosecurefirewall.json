@@ -5,7 +5,7 @@
     "publisher": "Splunk",
     "package_name": "phantom_ciscosecurefirewall",
     "type": "firewall",
-    "license": "Copyright (c) 2025 Splunk Inc.",
+    "license": "Copyright (c) 2025-2026 Splunk Inc.",
     "main_module": "ciscosecurefirewall_connector.py",
     "app_version": "1.0.2",
     "utctime_updated": "2025-09-08T19:05:36.844431Z",
@@ -39,6 +39,7 @@
         "verify_server_cert": {
             "description": "Verify server certificate",
             "data_type": "boolean",
+            "default": true,
             "order": 2
         },
         "username": {
